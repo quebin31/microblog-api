@@ -1,0 +1,79 @@
+Post:
+  type: object
+  properties:
+    title:
+      type: string
+      example: Lorem ipsum dolor sit amet.
+    body:
+      type: string
+      example: |
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.
+    score:
+      description: The post score calculated from adding positive votes to the negative ones.
+      type: integer
+    positiveVotes:
+      description: Total number of positive votes.
+      type: integer
+    negativeVotes:
+      description: Total number of negative votes.
+      type: integer
+    totalVotes:
+      description: Total number of votes.
+      type: integer
+    draft:
+      description: |
+        Whether or not this post is a draft (not yet published). Only included when returning posts from the 
+        authenticated user.
+      type: boolean
+    lastModifiedAt:
+      description: Last time this post was modified (null if it hasn't been modified)
+      type: string
+      format: date-time
+      nullable: true
+
+PostsResponse:
+  type: object
+  properties:
+    posts:
+      type: array
+      items:
+        $ref: "#/Post"
+
+NewPostRequest:
+  type: object
+  properties:
+    title:
+      type: string
+      minLength: 1
+      maxLength: 128
+      example: Lorem ipsum dolor sit amet.
+    body:
+      type: string
+      minLength: 1
+      maxLength: 1024
+      example: |
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.
+    draft:
+      description: Whether the post is a draft (only visible to the user)
+      type: boolean
+      default: false
+  required:
+    - title
+    - body
+
+PostUpdate:
+  type: object
+  properties:
+    draft:
+      description: |
+        Change the draft state of this post to `false`, effectively publishing it. Published posts cannot be turned 
+        into drafts.
+      type: boolean
+      enum: [ false ]
+    body:
+      description: New post body
+      type: string
+      minLength: 1
+      maxLength: 1024
+      example: |
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.

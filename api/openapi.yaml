@@ -11,6 +11,8 @@ servers:
 tags:
   - name: Accounts
     description: Endpoints related to auth and accounts
+  - name: Posts
+    description: Endpoints related to posts
 security:
   - bearerAuth: [ ]
 components:
@@ -39,6 +41,15 @@ components:
       $ref: "./models/accounts.yaml#/AccountInfoResponse"
     AccountInfoUpdate:
       $ref: "./models/accounts.yaml#/AccountInfoUpdate"
+
+    PostsResponse:
+      $ref: "./models/posts.yaml#/PostsResponse"
+    NewPostRequest:
+      $ref: "./models/posts.yaml#/NewPostRequest"
+    PostResponse:
+      $ref: "./models/posts.yaml#/Post"
+    PostUpdate:
+      $ref: "./models/posts.yaml#/PostUpdate"
 paths:
   /accounts/sign-up:
     post:
@@ -103,6 +114,7 @@ paths:
           description: The email was successfully verified
 
   /accounts/{id}:
+    summary: Operations for a specific account
     parameters:
       - $ref: "#/components/parameters/id"
     get:
@@ -136,3 +148,130 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/AccountInfoResponse"
+
+  /posts:
+    get:
+      summary: Get all posts
+      tags:
+        - Posts
+      operationId: getPosts
+      security: [ ]
+      parameters:
+        - name: sort
+          in: query
+          required: false
+          description: Sort order (by creation time)
+          schema:
+            type: string
+            enum: [ desc, asc ]
+            default: desc
+        - name: from
+          in: query
+          required: false
+          description: Post id from where list is returned
+          schema:
+            type: string
+            format: uuid
+        - name: limit
+          in: query
+          required: false
+          description: How many posts to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 30
+        - name: user
+          in: query
+          required: false
+          description: |
+            Filter by a specific user, can receive a `<uuid>` or the special value `self` to filter for the 
+            authenticated user. Will return all posts if no value is provided.
+          schema:
+            type: string
+            enum: [ <uuid>, self ]
+        - name: include
+          in: query
+          required: false
+          description: |
+            Which posts to include, by default will include `all` posts, though, drafts will only be included when
+            filtering for the current user (i.e. `user=self`). The value `all` is an alias for `published,drafts`.
+          style: form
+          explode: false
+          schema:
+            type: array
+            default: [ all ]
+            uniqueItems: true
+            items:
+              type: string
+              enum: [ all, published, drafts ]
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostsResponse"
+    post:
+      summary: Create a new post
+      tags:
+        - Posts
+      operationId: createPost
+      requestBody:
+        description: Post data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewPostRequest"
+
+  /posts/{id}:
+    summary: Operations for a specific post
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Get post information
+      description: |
+        Returns a post information. Authorization is optional, though, posts that haven't been published yet won't be 
+        accessible without a valid access token from the owner.
+      tags:
+        - Posts
+      operationId: getPost
+      responses:
+        200:
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostResponse"
+    patch:
+      summary: Update a post
+      description: |
+        Update a post to either change its contents or to publish it (if it's a draft).
+      tags:
+        - Posts
+      operationId: updatePost
+      requestBody:
+        description: Update post data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PostUpdate"
+      responses:
+        200:
+          description: Successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostResponse"
+    delete:
+      summary: Delete a post
+      description: |
+        Delete a post, only the owner of a post or moderator and admins can delete a post.
+      tags:
+        - Posts
+      operationId: deletePost
+      responses:
+        204:
+          description: Post was successfully deleted.
