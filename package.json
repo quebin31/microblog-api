@@ -1,0 +1,11 @@
+{
+  "name": "microblog-api",
+  "version": "0.1.0",
+  "description": "A microblog API",
+  "main": "dist/index.js",
+  "scripts": {
+    "test": "jest"
+  },
+  "author": "Kevin Del Castillo",
+  "license": "MIT"
+}
