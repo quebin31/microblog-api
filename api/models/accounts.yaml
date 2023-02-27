@@ -1,0 +1,68 @@
+AuthRequest:
+  type: object
+  properties:
+    email:
+      type: string
+      format: email
+    password:
+      type: string
+      format: password
+  required:
+    - email
+    - password
+
+SignUpAuthRequest:
+  type: object
+  allOf:
+    - $ref: "#/AuthRequest"
+    - properties:
+        name:
+          type: string
+          minLength: 3
+          maxLength: 64
+
+AuthResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      format: uuid
+    accessToken:
+      type: string
+      format: jwt
+  required:
+    - id
+    - accessToken
+
+AccountInfoResponse:
+  type: object
+  properties:
+    email:
+      description: The user's email (if public, otherwise `null`)
+      type: string
+      format: email
+      nullable: true
+    name:
+      description: The user's name (if public, otherwise `null`)
+      type: string
+      nullable: true
+    role:
+      description: The user's role
+      type: string
+      enum: [ user, moderator, admin ]
+
+AccountInfoUpdate:
+  properties:
+    name:
+      description: The new user's name (it can only be changed by the user)
+      type: string
+    role:
+      description: The new user's role (only admins can change a user's role)
+      type: string
+      enum: [ user, moderator ]
+    publicEmail:
+      description: Whether or not the user's email should be public (it can only be changed by the user)
+      type: boolean
+    publicName:
+      description: Whether or not the user's name should be public (it can only be changed by the user)
+      type: boolean

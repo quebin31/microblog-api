@@ -1,0 +1,138 @@
+openapi: 3.1.0
+info:
+  title: Microblog API
+  description: The OpenAPI spec for the Microblog service
+  version: 0.1.0
+  contact:
+    name: Kevin Del Castillo
+    email: kevindelcastillo@ravn.co
+servers:
+  - url: 'http://localhost/api/v1'
+tags:
+  - name: Accounts
+    description: Endpoints related to auth and accounts
+security:
+  - bearerAuth: [ ]
+components:
+  securitySchemes:
+    bearerAuth:
+      description: Authorization with a Json Web Token (obtained after signing in/up)
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  parameters:
+    id:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+  schemas:
+    AuthRequest:
+      $ref: "./models/accounts.yaml#/AuthRequest"
+    SignUpAuthRequest:
+      $ref: "./models/accounts.yaml#/SignUpAuthRequest"
+    AuthResponse:
+      $ref: "./models/accounts.yaml#/AuthResponse"
+    AccountInfoResponse:
+      $ref: "./models/accounts.yaml#/AccountInfoResponse"
+    AccountInfoUpdate:
+      $ref: "./models/accounts.yaml#/AccountInfoUpdate"
+paths:
+  /accounts/sign-up:
+    post:
+      summary: Sign up with a new account
+      tags:
+        - Accounts
+      operationId: signUp
+      security: [ ]
+      requestBody:
+        description: New account information
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SignUpAuthRequest"
+      responses:
+        201:
+          description: Account was successfully created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /accounts/sign-in:
+    post:
+      summary: Sign in with an existent account
+      tags:
+        - Accounts
+      operationId: signIn
+      security: [ ]
+      requestBody:
+        description: Account credentials
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AuthRequest"
+      responses:
+        200:
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /accounts/verify-email:
+    # I guess this how this usually done when you receive a link in your email that you can click
+    get:
+      summary: Verify new account email
+      tags:
+        - Accounts
+      operationId: verifyEmail
+      security: [ ]
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        204:
+          description: The email was successfully verified
+
+  /accounts/{id}:
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Get account information
+      tags:
+        - Accounts
+      operationId: getAccountInformation
+      security: [ ]
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountInfoResponse"
+    patch:
+      summary: Update account information
+      tags:
+        - Accounts
+      requestBody:
+        description: Values to update
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AccountInfoUpdate"
+      responses:
+        200:
+          description: Account information was successfully updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AccountInfoResponse"
