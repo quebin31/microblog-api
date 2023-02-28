@@ -165,14 +165,14 @@ paths:
             type: string
             enum: [ desc, asc ]
             default: desc
-        - name: from
+        - name: cursor
           in: query
           required: false
-          description: Post id from where list is returned
+          description: Cursor from where the new list will start
           schema:
             type: string
-            format: uuid
-        - name: limit
+            format: date-time
+        - name: take
           in: query
           required: false
           description: How many posts to return

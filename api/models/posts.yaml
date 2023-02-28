@@ -38,6 +38,11 @@ PostsResponse:
       type: array
       items:
         $ref: "#/Post"
+    cursor:
+      description: Cursor position
+      type: string
+      format: date-time
+      nullable: true
 
 NewPostRequest:
   type: object
