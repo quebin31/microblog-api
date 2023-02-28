@@ -1,0 +1,43 @@
+Comment:
+  type: object
+  properties:
+    body:
+      type: string
+      example: |
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.
+    score:
+      description: The comment score calculated from adding positive votes to the negative ones.
+      type: integer
+    positiveVotes:
+      description: Total number of positive votes.
+      type: integer
+    negativeVotes:
+      description: Total number of negative votes.
+      type: integer
+    totalVotes:
+      description: Total number of votes.
+      type: integer
+    draft:
+      description: |
+        Whether or not this comment is a draft (not yet published). Only included when returning comments from the 
+        authenticated user.
+      type: boolean
+    lastModifiedAt:
+      description: Last time this comment was modified (null if it hasn't been modified)
+      type: string
+      format: date-time
+      nullable: true
+
+CommentsResponse:
+  type: object
+  properties:
+    comments:
+      type: array
+      items:
+        $ref: "#/Comment"
+    cursor:
+      description: Cursor position
+      type: string
+      format: date-time
+      nullable: true
+

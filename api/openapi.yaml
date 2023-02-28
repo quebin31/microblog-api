@@ -50,6 +50,9 @@ components:
       $ref: "./models/posts.yaml#/Post"
     PostUpdate:
       $ref: "./models/posts.yaml#/PostUpdate"
+
+    CommentsResponse:
+      $ref: "./models/comments.yaml#/CommentsResponse"
 paths:
   /accounts/sign-up:
     post:
@@ -275,3 +278,76 @@ paths:
       responses:
         204:
           description: Post was successfully deleted.
+
+  /comments:
+    get:
+      summary: Get all comments
+      tags:
+        - Comments
+      operationId: getComments
+      description: |
+        Returns all the comments for a given `post` id, and/or `user` id (at least one of them must be set).
+      parameters:
+        - name: sort
+          in: query
+          required: false
+          description: Sort order (by creation time)
+          schema:
+            type: string
+            enum: [ desc, asc ]
+            default: desc
+        - name: cursor
+          in: query
+          required: false
+          description: Cursor from where the new list will start
+          schema:
+            type: string
+            format: uuid
+        - name: take
+          in: query
+          required: false
+          description: How many comments to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 30
+        - name: post
+          in: query
+          required: false
+          description: |
+            Filter by a specific post. Can be used with `user`, and at least one of them must be set.
+          schema:
+            type: string
+            format: uuid
+        - name: user
+          in: query
+          required: false
+          description: |
+            Filter by a specific user, can receive a `<uuid>` or the special value `self` to filter for the
+            authenticated user. Can be used with `post`, and at least one of them must be set.
+          schema:
+            type: string
+            enum: [ <uuid>, self ]
+        - name: include
+          in: query
+          required: false
+          description: |
+            Which comments to include, by default will include `all` published comments. Drafts will only be included 
+            when filtering for the current user (i.e. `user=self`). The value `all` is an alias for `published,drafts`.
+          style: form
+          explode: false
+          schema:
+            type: array
+            default: [ all ]
+            uniqueItems: true
+            items:
+              type: string
+              enum: [ all, published, drafts ]
+      responses:
+        200:
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentsResponse"

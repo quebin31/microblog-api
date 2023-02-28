@@ -8,6 +8,7 @@
       <map>
         <entry key="file://$PROJECT_DIR$/api/models/accounts.yaml" value="openapi31" />
         <entry key="file://$PROJECT_DIR$/api/models/posts.yaml" value="openapi31" />
+        <entry key="file://$PROJECT_DIR$/api/models/comments.yaml" value="openapi31" />
       </map>
     </option>
   </component>
