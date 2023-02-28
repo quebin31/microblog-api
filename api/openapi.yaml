@@ -53,6 +53,12 @@ components:
 
     CommentsResponse:
       $ref: "./models/comments.yaml#/CommentsResponse"
+    NewCommentRequest:
+      $ref: "./models/comments.yaml#/NewCommentRequest"
+    CommentResponse:
+      $ref: "./models/comments.yaml#/Comment"
+    CommentUpdate:
+      $ref: "./models/comments.yaml#/CommentUpdate"
 paths:
   /accounts/sign-up:
     post:
@@ -288,6 +294,7 @@ paths:
           description: Post was successfully deleted.
 
   /comments:
+    summary: Operations for comments
     get:
       summary: Get all comments
       tags:
@@ -359,3 +366,73 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/CommentsResponse"
+    post:
+      summary: Create a new comment
+      tags:
+        - Comments
+      operationId: createComment
+      requestBody:
+        description: Comment data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/NewCommentRequest"
+      responses:
+        201:
+          description: Comment successfully created.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentResponse"
+
+  /comments/{id}:
+    summary: Operations for a specific comment
+    parameters:
+      - $ref: "#/components/parameters/id"
+    get:
+      summary: Get comment information
+      description: |
+        Returns a comment information. Authorization is optional, though, comments that haven't been published yet won't
+        be accessible without a valid access token from the owner.
+      tags:
+        - Comments
+      operationId: getComment
+      responses:
+        200:
+          description: Successful response.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentResponse"
+    patch:
+      summary: Update a comment
+      description: |
+        Update a comment to either change its contents or to publish it (if it's a draft).
+      tags:
+        - Comments
+      operationId: updateComment
+      requestBody:
+        description: Update comment data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CommentUpdate"
+      responses:
+        200:
+          description: Successfully updated.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/CommentResponse"
+    delete:
+      summary: Delete a comment
+      description: | 
+        Delete a comment, only the owner of a post or moderators and admins can delete a comment.
+      tags:
+        - Comments
+      operationId: deleteComment
+      responses:
+        204:
+          description: Comment was successfully deleted.

@@ -1,6 +1,13 @@
 Comment:
   type: object
   properties:
+    postId:
+      description: The post where this comment belongs to.
+      type: string
+      format: uuid
+    postTitle:
+      description: The post title
+      type: string
     body:
       type: string
       example: |
@@ -41,3 +48,42 @@ CommentsResponse:
       format: date-time
       nullable: true
 
+NewCommentRequest:
+  type: object
+  properties:
+    postId:
+      description: The post where this comment belongs to.
+      type: string
+      format: uuid
+    body:
+      type: string
+      minLength: 1
+      maxLength: 512
+      example: |
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.
+        draft:
+    draft:
+      description: Whether the comment is a draft (only visible to the user)
+      type: boolean
+      default: false
+  required:
+    - postId
+    - body
+
+CommentUpdate:
+  type: object
+  properties:
+    draft:
+      description: |
+        Change the draft state of this comment to `false`, effectively publishing it. Published comments cannot be 
+        turned into drafts.
+      type: boolean
+      enum: [ false ]
+    body:
+      description: New comment body
+      type: string
+      minLength: 1
+      maxLength: 512
+      example: |
+        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.
+        draft:
