@@ -428,7 +428,7 @@ paths:
                 $ref: "#/components/schemas/CommentResponse"
     delete:
       summary: Delete a comment
-      description: | 
+      description: |
         Delete a comment, only the owner of a post or moderators and admins can delete a comment.
       tags:
         - Comments
