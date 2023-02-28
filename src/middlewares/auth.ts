@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { UnauthorizedError } from '../errors';
-import { verifyJwt } from '../util/auth';
+import { verifyJwt } from '../utils/auth';
 import config from '../config';
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {

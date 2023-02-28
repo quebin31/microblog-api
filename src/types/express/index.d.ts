@@ -1,4 +1,4 @@
-import { Role } from '../../util/auth';
+import { Role } from '../../utils/auth';
 
 export {};
 

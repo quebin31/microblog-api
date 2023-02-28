@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { authMiddleware } from '../auth';
-import { AuthPayload, createJwt, Role } from '../../util/auth';
+import { AuthPayload, createJwt, Role } from '../../utils/auth';
 import config from '../../config';
 
 describe('Auth Middleware', () => {
