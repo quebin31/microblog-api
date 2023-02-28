@@ -153,6 +153,7 @@ paths:
                 $ref: "#/components/schemas/AccountInfoResponse"
 
   /posts:
+    summary: Operations for posts
     get:
       summary: Get all posts
       tags:
@@ -227,6 +228,13 @@ paths:
           application/json:
             schema:
               $ref: "#/components/schemas/NewPostRequest"
+      responses:
+        201:
+          description: Post was created successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PostResponse"
 
   /posts/{id}:
     summary: Operations for a specific post
@@ -271,7 +279,7 @@ paths:
     delete:
       summary: Delete a post
       description: |
-        Delete a post, only the owner of a post or moderator and admins can delete a post.
+        Delete a post, only the owner of a post or moderators and admins can delete a post.
       tags:
         - Posts
       operationId: deletePost
