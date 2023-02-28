@@ -9,3 +9,63 @@ datasource db {
     provider = "postgresql"
     url      = env("DB_URL")
 }
+
+enum Role {
+    User
+    Moderator
+    Admin
+}
+
+model User {
+    id        String   @id @default(uuid()) @db.Uuid
+    createdAt DateTime @default(now()) @map("created_at")
+
+    email       String    @unique
+    password    String
+    name        String
+    publicEmail Boolean   @default(false) @map("public_email")
+    publicName  Boolean   @default(true) @map("public_name")
+    role        Role      @default(User)
+    posts       Post[]
+    comments    Comment[]
+
+    @@map("users")
+}
+
+model Post {
+    id        String   @id @default(uuid()) @db.Uuid
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    title         String
+    body          String
+    positiveVotes Int     @default(0) @map("positive_votes")
+    negativeVotes Int     @default(0) @map("negative_votes")
+    draft         Boolean
+
+    userId   String    @map("user_id") @db.Uuid
+    user     User      @relation(fields: [userId], references: [id])
+    comments Comment[]
+
+    @@map("posts")
+}
+
+model Comment {
+    id String @id @default(uuid()) @db.Uuid
+
+    createdAt DateTime @default(now()) @map("created_at")
+    updatedAt DateTime @updatedAt @map("updated_at")
+
+    body          String
+    positiveVotes Int     @default(0) @map("positive_votes")
+    negativeVotes Int     @default(0) @map("negative_votes")
+    draft         Boolean
+
+    postId String @map("post_id") @db.Uuid
+    post   Post   @relation(fields: [postId], references: [id])
+
+    userId String @map("user_id") @db.Uuid
+    user   User   @relation(fields: [userId], references: [id])
+
+    @@map("comments")
+}
