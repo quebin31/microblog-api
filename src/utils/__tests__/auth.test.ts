@@ -35,10 +35,14 @@ describe('JSON Web Token', () => {
     expect(() => auth.verifyJwt(jwt, secret)).toThrow();
   });
 
-  const invalidPayloads = [[{}], [{ role: auth.Role.Admin }], [{ sub: 'subject' }]];
-  test.each(invalidPayloads)('partial payload %p is invalid', () => {
+  const invalidPayloads = [
+    [{} as auth.AuthPayload],
+    [{ role: auth.Role.Admin } as auth.AuthPayload],
+    [{ sub: 'subject' } as auth.AuthPayload],
+  ];
+  test.each(invalidPayloads)('partial payload %p is invalid', (payload) => {
     const secret = 'secret';
-    const jwt = auth.createJwt({} as auth.AuthPayload, secret);
+    const jwt = auth.createJwt(payload, secret);
 
     expect(() => auth.verifyJwt(jwt, secret))
       .toThrowError('Received invalid JWT payload');
