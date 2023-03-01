@@ -1,3 +1,5 @@
 import { OverridableConfig } from './index';
 
-export default <OverridableConfig>{};
+export default <OverridableConfig>{
+  logLevel: 'warn',
+};

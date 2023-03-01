@@ -5,6 +5,16 @@ dotenv.config();
 const nodeEnvValues = ['production', 'development', 'test'] as const;
 export type NodeEnv = typeof nodeEnvValues[number];
 
+export const logLevels = {
+  error: 0,
+  warn: 1,
+  info: 2,
+  http: 3,
+  debug: 4,
+};
+
+export type LogLevel = keyof typeof logLevels;
+
 function isValidNodeEnv(value: unknown): value is NodeEnv {
   return typeof value === 'string' && nodeEnvValues.includes(value as NodeEnv);
 }
@@ -13,6 +23,7 @@ export interface Config {
   nodeEnv: NodeEnv,
   jwtSecret: string,
   port: string,
+  logLevel: LogLevel,
 }
 
 export type OverridableConfig = Omit<Partial<Config>, 'nodeEnv'>
@@ -39,5 +50,6 @@ export default <Config>{
   nodeEnv,
   jwtSecret: process.env.JWT_SECRET ?? overrideConfig.jwtSecret!!,
   port: process.env.PORT ?? overrideConfig.port!!,
+  logLevel: 'debug',
   ...overrideConfig,
 };
