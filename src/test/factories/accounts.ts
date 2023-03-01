@@ -2,7 +2,7 @@ import { Role, User } from '@prisma/client';
 import { faker } from '@faker-js/faker';
 import { SignInData, SignUpData } from '../../schemas/accounts';
 
-export function createUser(partial?: Partial<User>): User {
+export function createUser(overrides?: Partial<User>): User {
   return {
     createdAt: new Date(),
     email: faker.internet.email(),
@@ -12,23 +12,23 @@ export function createUser(partial?: Partial<User>): User {
     publicEmail: false,
     publicName: true,
     role: Role.user,
-    ...partial,
+    ...overrides,
   };
 }
 
-export function createSignUpData(partial?: Partial<SignUpData>): SignUpData {
+export function createSignUpData(overrides?: Partial<SignUpData>): SignUpData {
   return {
     email: faker.internet.email(),
     password: 'pa$$word123',
     name: faker.name.firstName(),
-    ...partial,
+    ...overrides,
   };
 }
 
-export function createSignInData(partial?: Partial<SignInData>): SignInData {
+export function createSignInData(overrides?: Partial<SignInData>): SignInData {
   return {
     email: faker.internet.email(),
     password: 'pa$$word123',
-    ...partial,
+    ...overrides,
   };
 }
