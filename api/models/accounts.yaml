@@ -52,6 +52,7 @@ AccountInfoResponse:
       enum: [ user, moderator, admin ]
 
 AccountInfoUpdate:
+  type: object
   properties:
     name:
       description: The new user's name (it can only be changed by the user)
@@ -66,3 +67,12 @@ AccountInfoUpdate:
     publicName:
       description: Whether or not the user's name should be public (it can only be changed by the user)
       type: boolean
+
+VerifyEmailRequest:
+  type: object
+  properties:
+    verificationCode:
+      description: Email verification code
+      type: string
+  required:
+    - verificationCode

@@ -41,6 +41,8 @@ components:
       $ref: "./models/accounts.yaml#/AccountInfoResponse"
     AccountInfoUpdate:
       $ref: "./models/accounts.yaml#/AccountInfoUpdate"
+    VerifyEmailRequest:
+      $ref: "./models/accounts.yaml#/VerifyEmailRequest"
 
     PostsResponse:
       $ref: "./models/posts.yaml#/PostsResponse"
@@ -105,19 +107,18 @@ paths:
                 $ref: "#/components/schemas/AuthResponse"
 
   /accounts/verify-email:
-    # I guess this how this usually done when you receive a link in your email that you can click
-    get:
-      summary: Verify new account email
+    post:
+      summary: Verify account email
       tags:
         - Accounts
       operationId: verifyEmail
       security: [ ]
-      parameters:
-        - name: code
-          in: query
-          required: true
-          schema:
-            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyEmailRequest"
       responses:
         204:
           description: The email was successfully verified
