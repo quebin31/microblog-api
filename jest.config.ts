@@ -5,8 +5,8 @@ export default <Config>{
   preset: 'ts-jest',
   testEnvironment: 'node',
   verbose: true,
-  collectCoverageFrom: ['**/*.ts'],
-  coveragePathIgnorePatterns: ['**/__test__/*', '**/*.test.*'],
+  collectCoverageFrom: ['src/**/*.ts'],
+  coveragePathIgnorePatterns: ['.*\.d\.ts'],
   watchPlugins: [
     require.resolve('jest-watch-typeahead/filename'),
     require.resolve('jest-watch-typeahead/testname'),
