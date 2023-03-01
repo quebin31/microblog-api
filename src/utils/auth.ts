@@ -1,5 +1,6 @@
 import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from 'jsonwebtoken';
+import { Role } from '@prisma/client';
 
 export async function saltPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 5);
@@ -9,11 +10,6 @@ export async function checkPassword(password: string, salted: string): Promise<b
   return bcrypt.compare(password, salted);
 }
 
-export enum Role {
-  User = 'user',
-  Moderator = 'moderator',
-  Admin = 'admin',
-}
 
 export type AuthPayload = { sub: string, role: Role };
 

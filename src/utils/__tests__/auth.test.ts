@@ -1,5 +1,6 @@
 import * as auth from '../auth';
 import { faker } from '@faker-js/faker';
+import { Role } from '@prisma/client';
 
 describe('Password Salting', () => {
   test('salted password is valid compared to original password', async () => {
@@ -22,22 +23,22 @@ describe('Password Salting', () => {
 describe('JSON Web Token', () => {
   test('payload is valid if signed JWT is valid', () => {
     const secret = 'secret';
-    const jwt = auth.createJwt({ sub: 'subject', role: auth.Role.User }, secret);
+    const jwt = auth.createJwt({ sub: 'subject', role: Role.user }, secret);
     const jwtPayload = auth.verifyJwt(jwt, secret);
 
-    expect(jwtPayload).toMatchObject({ sub: 'subject', role: auth.Role.User });
+    expect(jwtPayload).toMatchObject({ sub: 'subject', role: Role.user });
   });
 
   test('payload is invalid if signed with different secret', () => {
     const secret = 'secret';
-    const jwt = auth.createJwt({ sub: 'subject', role: auth.Role.Admin }, 'other-secret');
+    const jwt = auth.createJwt({ sub: 'subject', role: Role.admin }, 'other-secret');
 
     expect(() => auth.verifyJwt(jwt, secret)).toThrow();
   });
 
   const invalidPayloads = [
     [{} as auth.AuthPayload],
-    [{ role: auth.Role.Admin } as auth.AuthPayload],
+    [{ role: Role.admin } as auth.AuthPayload],
     [{ sub: 'subject' } as auth.AuthPayload],
   ];
   test.each(invalidPayloads)('partial payload %p is invalid', (payload) => {

@@ -1,7 +1,8 @@
 import { authMiddleware } from '../auth';
-import { AuthPayload, createJwt, Role } from '../../utils/auth';
+import { AuthPayload, createJwt } from '../../utils/auth';
 import config from '../../config';
 import { buildNext, buildReq, buildRes } from '../../test/express';
+import { Role } from '@prisma/client';
 
 describe('Auth Middleware', () => {
   test('fails if authorization header is missing', () => {
@@ -37,7 +38,7 @@ describe('Auth Middleware', () => {
 
   test('injects user information into the request object if token is valid', () => {
     const secret = config.jwtSecret;
-    const payload: AuthPayload = { sub: 'sub', role: Role.Moderator };
+    const payload: AuthPayload = { sub: 'sub', role: Role.moderator };
     const accessToken = createJwt(payload, secret);
     const req = buildReq({ headers: { authorization: `Bearer ${accessToken}` } });
     const res = buildRes();
