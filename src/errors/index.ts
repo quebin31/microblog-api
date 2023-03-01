@@ -2,7 +2,8 @@ import { Response } from 'express';
 import { isNativeError } from 'util/types';
 
 export type ErrorCode = 'internal_server_error'
-  | 'unauthorized';
+  | 'unauthorized'
+  | 'bad_request';
 
 export type Rejection = {
   [key: string]: unknown
@@ -30,5 +31,11 @@ export function isRejectError(err: unknown): err is RejectError {
 export class UnauthorizedError extends RejectError {
   get rejection(): Rejection {
     return { status: 401, code: 'unauthorized', message: this.message };
+  }
+}
+
+export class BadRequestError extends RejectError {
+  get rejection(): Rejection {
+    return { status: 400, code: 'bad_request', message: this.message };
   }
 }
