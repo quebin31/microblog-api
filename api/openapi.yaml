@@ -129,6 +129,9 @@ paths:
       - $ref: "#/components/parameters/id"
     get:
       summary: Get account information
+      description: |
+        Returns the account information that matches the given id, _only_ verified accounts will be
+        returned.
       tags:
         - Accounts
       operationId: getAccountInformation

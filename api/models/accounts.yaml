@@ -7,6 +7,8 @@ AuthRequest:
     password:
       type: string
       format: password
+      minLength: 8
+      maxLength: 32
   required:
     - email
     - password
@@ -32,9 +34,6 @@ AuthResponse:
     accessToken:
       type: string
       format: jwt
-  required:
-    - id
-    - accessToken
 
 AccountInfoResponse:
   type: object
