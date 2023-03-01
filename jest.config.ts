@@ -7,6 +7,9 @@ export default <Config>{
   verbose: true,
   collectCoverageFrom: ['src/**/*.ts'],
   coveragePathIgnorePatterns: ['.*\.d\.ts'],
+  setupFilesAfterEnv: [
+    '<rootDir>/src/test/prisma.ts',
+  ],
   watchPlugins: [
     require.resolve('jest-watch-typeahead/filename'),
     require.resolve('jest-watch-typeahead/testname'),
