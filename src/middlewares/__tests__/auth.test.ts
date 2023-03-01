@@ -1,38 +1,36 @@
-import { Request, Response } from 'express';
 import { authMiddleware } from '../auth';
 import { AuthPayload, createJwt, Role } from '../../utils/auth';
 import config from '../../config';
+import { buildNext, buildReq, buildRes } from '../../test/express';
 
 describe('Auth Middleware', () => {
   test('fails if authorization header is missing', () => {
-    const req = <Request>{ headers: {} };
-    const next = jest.fn();
+    const req = buildReq({ headers: {} });
+    const res = buildRes();
+    const next = buildNext();
 
-    expect(() => authMiddleware(req, <Response>{}, next))
+    expect(() => authMiddleware(req, res, next))
       .toThrowError('Missing bearer access token');
     expect(next).toHaveBeenCalledTimes(0);
   });
 
   test('fails if access token is not valid JWT', () => {
-    const req = <Request>{
-      headers: { authorization: 'Bearer not-a-jwt' },
-    };
-    const next = jest.fn();
+    const req = buildReq({ headers: { authorization: 'Bearer not-a-jwt' } });
+    const res = buildRes();
+    const next = buildNext();
 
-    expect(() => authMiddleware(req, <Response>{}, next))
-      .toThrowError();
+    expect(() => authMiddleware(req, res, next)).toThrowError();
     expect(next).toHaveBeenCalledTimes(0);
   });
 
   test('fails if JWT payload is invalid', () => {
     const secret = config.jwtSecret;
     const accessToken = createJwt(<AuthPayload>{}, secret);
-    const req = <Request>{
-      headers: { authorization: `Bearer ${accessToken}` },
-    };
-    const next = jest.fn();
+    const req = buildReq({ headers: { authorization: `Bearer ${accessToken}` } });
+    const res = buildRes();
+    const next = buildNext();
 
-    expect(() => authMiddleware(req, <Response>{}, next))
+    expect(() => authMiddleware(req, res, next))
       .toThrowError('Received invalid JWT payload');
     expect(next).toHaveBeenCalledTimes(0);
   });
@@ -41,12 +39,11 @@ describe('Auth Middleware', () => {
     const secret = config.jwtSecret;
     const payload: AuthPayload = { sub: 'sub', role: Role.Moderator };
     const accessToken = createJwt(payload, secret);
-    const req = <Request>{
-      headers: { authorization: `Bearer ${accessToken}` },
-    };
-    const next = jest.fn();
+    const req = buildReq({ headers: { authorization: `Bearer ${accessToken}` } });
+    const res = buildRes();
+    const next = buildNext();
 
-    authMiddleware(req, <Response>{}, next);
+    authMiddleware(req, res, next);
 
     expect(req.subject).toEqual(payload.sub);
     expect(req.role).toEqual(payload.role);

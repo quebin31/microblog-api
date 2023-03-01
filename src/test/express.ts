@@ -1,6 +1,6 @@
-import { Request, Response } from 'express';
+import { NextFunction, Request, Response } from 'express';
 
-export function buildReq(partial?: object): Request {
+export function buildReq(partial?: Partial<Request> | object): Request {
   return <Request>{
     ...partial,
   };
@@ -15,4 +15,8 @@ export function buildRes(partial?: object): Response {
   };
 
   return res;
+}
+
+export function buildNext(): NextFunction {
+  return jest.fn();
 }
