@@ -12,6 +12,7 @@ function isValidNodeEnv(value: unknown): value is NodeEnv {
 export interface Config {
   nodeEnv: NodeEnv,
   jwtSecret: string,
+  port: string,
 }
 
 export type OverridableConfig = Omit<Partial<Config>, 'nodeEnv'>
@@ -21,21 +22,22 @@ if (!isValidNodeEnv(nodeEnv)) {
   throw new Error(`Received invalid value for environment variable NODE_ENV=${nodeEnv}`);
 }
 
-let overridableConfig: OverridableConfig;
+let overrideConfig: OverridableConfig;
 switch (nodeEnv) {
   case 'production':
-    overridableConfig = require('./config.production').default;
+    overrideConfig = require('./config.production').default;
     break;
   case 'development':
-    overridableConfig = require('./config.development').default;
+    overrideConfig = require('./config.development').default;
     break;
   case 'test':
-    overridableConfig = require('./config.testing').default;
+    overrideConfig = require('./config.testing').default;
     break;
 }
 
-export default {
+export default <Config>{
   nodeEnv,
-  jwtSecret: process.env.JWT_SECRET ?? overridableConfig.jwtSecret!!,
-  ...overridableConfig,
-} satisfies Config;
+  jwtSecret: process.env.JWT_SECRET ?? overrideConfig.jwtSecret!!,
+  port: process.env.PORT ?? overrideConfig.port!!,
+  ...overrideConfig,
+};
