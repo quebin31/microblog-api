@@ -23,6 +23,7 @@
     "@types/jsonwebtoken": "^9.0.1",
     "@types/morgan": "^1.9.4",
     "@types/node": "^18.14.2",
+    "@types/validator": "^13.7.12",
     "@typescript-eslint/eslint-plugin": "^5.54.0",
     "eslint": "^8.35.0",
     "eslint-config-prettier": "^8.6.0",
@@ -48,6 +49,7 @@
     "express-async-handler": "^1.2.0",
     "jsonwebtoken": "^9.0.0",
     "morgan": "^1.10.0",
+    "validator": "^13.9.0",
     "winston": "^3.8.2",
     "zod": "^3.20.6"
   }

@@ -1,6 +1,7 @@
 import * as auth from '../auth';
 import { faker } from '@faker-js/faker';
 import { Role } from '@prisma/client';
+import { isValidPassword } from '../auth';
 
 describe('Password Salting', () => {
   test('salted password is valid compared to original password', async () => {
@@ -47,5 +48,21 @@ describe('JSON Web Token', () => {
 
     expect(() => auth.verifyJwt(jwt, secret))
       .toThrowError('Received invalid JWT payload');
+  });
+});
+
+describe('Password validation', () => {
+  const validPasswords = [
+    ['pa$$word123'], ['abc!1def'], ['hello1m1okay!'], ['Pass!1235'],
+  ];
+  test.each(validPasswords)('returns true with valid password %p', (password) => {
+    expect(isValidPassword(password)).toBeTruthy();
+  });
+
+  const invalidPasswords = [
+    ['short'], ['no!numbers'], ['nosymb0ls'], ['12345511'],
+  ];
+  test.each(invalidPasswords)('returns false with invalid password %p', (password) => {
+    expect(isValidPassword(password)).toBeFalsy();
   });
 });
