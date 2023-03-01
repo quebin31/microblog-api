@@ -20,6 +20,8 @@ SignUpAuthRequest:
           type: string
           minLength: 3
           maxLength: 64
+      required:
+        - name
 
 AuthResponse:
   type: object
