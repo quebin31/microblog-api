@@ -1,6 +1,6 @@
 import { Role, User } from '@prisma/client';
 import { faker } from '@faker-js/faker';
-import { SignUpData } from '../../schemas/accounts';
+import { SignInData, SignUpData } from '../../schemas/accounts';
 
 export function createUser(partial?: Partial<User>): User {
   return {
@@ -21,6 +21,14 @@ export function createSignUpData(partial?: Partial<SignUpData>): SignUpData {
     email: faker.internet.email(),
     password: 'pa$$word123',
     name: faker.name.firstName(),
+    ...partial,
+  };
+}
+
+export function createSignInData(partial?: Partial<SignInData>): SignInData {
+  return {
+    email: faker.internet.email(),
+    password: 'pa$$word123',
     ...partial,
   };
 }

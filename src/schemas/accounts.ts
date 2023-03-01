@@ -11,7 +11,11 @@ export const signUpSchema = z
     name: z.string().min(2).max(64),
   });
 
-export const signInSchema = z.object(authShape);
+export const signInSchema = z
+  .object(authShape)
+  .extend({
+    password: z.string(),
+  });
 
 export type SignUpData = z.infer<typeof signUpSchema>;
 export type SignInData = z.infer<typeof signInSchema>;

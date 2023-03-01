@@ -3,7 +3,8 @@ import { isNativeError } from 'util/types';
 
 export type ErrorCode = 'internal_server_error'
   | 'unauthorized'
-  | 'bad_request';
+  | 'bad_request'
+  | 'not_found';
 
 export type Rejection = {
   [key: string]: unknown
@@ -37,5 +38,11 @@ export class UnauthorizedError extends RejectError {
 export class BadRequestError extends RejectError {
   get rejection(): Rejection {
     return { status: 400, code: 'bad_request', message: this.message };
+  }
+}
+
+export class NotFoundError extends RejectError {
+  get rejection(): Rejection {
+    return { status: 404, code: 'not_found', message: this.message };
   }
 }
