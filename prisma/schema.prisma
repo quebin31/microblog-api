@@ -11,9 +11,9 @@ datasource db {
 }
 
 enum Role {
-    User
-    Moderator
-    Admin
+    user
+    moderator
+    admin
 }
 
 model User {
@@ -25,7 +25,7 @@ model User {
     name        String
     publicEmail Boolean   @default(false) @map("public_email")
     publicName  Boolean   @default(true) @map("public_name")
-    role        Role      @default(User)
+    role        Role      @default(user)
     posts       Post[]
     comments    Comment[]
 
