@@ -4,7 +4,8 @@ import { isNativeError } from 'util/types';
 export type ErrorCode = 'internal_server_error'
   | 'unauthorized'
   | 'bad_request'
-  | 'not_found';
+  | 'not_found'
+  | 'too_many_requests'
 
 export type Rejection = {
   [key: string]: unknown
@@ -44,5 +45,11 @@ export class BadRequestError extends RejectError {
 export class NotFoundError extends RejectError {
   get rejection(): Rejection {
     return { status: 404, code: 'not_found', message: this.message };
+  }
+}
+
+export class TooManyRequestsError extends RejectError {
+  get rejection(): Rejection {
+    return { status: 429, code: 'too_many_requests', message: this.message };
   }
 }
