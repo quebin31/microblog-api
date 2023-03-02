@@ -11,6 +11,7 @@ export default <Config>{
   setupFilesAfterEnv: [
     '<rootDir>/src/test/prisma.ts',
     '<rootDir>/src/test/redis.ts',
+    '<rootDir>/src/test/sendgrid.ts',
   ],
   watchPlugins: [
     require.resolve('jest-watch-typeahead/filename'),
