@@ -1,6 +1,8 @@
 import dotenv from 'dotenv';
+import dotenvExpand from 'dotenv-expand';
 
-dotenv.config();
+const env = dotenv.config();
+dotenvExpand.expand(env);
 
 const nodeEnvValues = ['production', 'development', 'test'] as const;
 export type NodeEnv = typeof nodeEnvValues[number];
@@ -24,6 +26,7 @@ export interface Config {
   jwtSecret: string,
   port: string,
   logLevel: LogLevel,
+  redisUrl: string,
 }
 
 export type OverridableConfig = Omit<Partial<Config>, 'nodeEnv'>
@@ -51,5 +54,6 @@ export default <Config>{
   jwtSecret: process.env.JWT_SECRET ?? overrideConfig.jwtSecret!!,
   port: process.env.PORT ?? overrideConfig.port!!,
   logLevel: 'debug',
+  redisUrl: process.env.REDIS_URL ?? overrideConfig.redisUrl!!,
   ...overrideConfig,
 };
