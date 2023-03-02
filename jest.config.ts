@@ -6,7 +6,8 @@ export default <Config>{
   testEnvironment: 'node',
   verbose: true,
   collectCoverageFrom: ['src/**/*.ts'],
-  coveragePathIgnorePatterns: ['.*\.d\.ts'],
+  coveragePathIgnorePatterns: ['.*\.d\.ts', 'dist'],
+  testPathIgnorePatterns: ['<rootDir>/dist'],
   setupFilesAfterEnv: [
     '<rootDir>/src/test/prisma.ts',
   ],
