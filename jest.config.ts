@@ -10,6 +10,7 @@ export default <Config>{
   testPathIgnorePatterns: ['<rootDir>/dist'],
   setupFilesAfterEnv: [
     '<rootDir>/src/test/prisma.ts',
+    '<rootDir>/src/test/redis.ts',
   ],
   watchPlugins: [
     require.resolve('jest-watch-typeahead/filename'),
