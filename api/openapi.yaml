@@ -112,7 +112,6 @@ paths:
       tags:
         - Accounts
       operationId: verifyEmail
-      security: [ ]
       requestBody:
         required: true
         content:
@@ -122,6 +121,16 @@ paths:
       responses:
         204:
           description: The email was successfully verified
+
+  /accounts/resend-email:
+    post:
+      summary: Resend verification email
+      tags:
+        - Accounts
+      operationId: resendEmail
+      responses:
+        204:
+          description: The verification email has been resend.
 
   /accounts/{id}:
     summary: Operations for a specific account
