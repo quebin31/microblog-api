@@ -1,10 +1,10 @@
-import { prismaMock } from '../../test/prisma';
+import { prismaMock } from '../../test/mocks/prisma';
 import * as verificationService from '../verification.service';
 import { randomUUID } from 'crypto';
 import { NotFoundError, TooManyRequestsError } from '../../errors';
 import { createUser } from '../../test/factories/accounts';
-import { redisClientMock } from '../../test/redis';
-import { sendGridMailMock } from '../../test/sendgrid';
+import { redisClientMock } from '../../test/mocks/redis';
+import { sendGridMailMock } from '../../test/mocks/sendgrid';
 import { MailDataRequired } from '@sendgrid/mail';
 import { nolookalikes } from 'nanoid-dictionary';
 

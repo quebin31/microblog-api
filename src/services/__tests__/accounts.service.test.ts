@@ -1,5 +1,5 @@
 import * as accountsService from '../accounts.service';
-import { prismaMock } from '../../test/prisma';
+import { prismaMock } from '../../test/mocks/prisma';
 import { createSignInData, createSignUpData, createUser } from '../../test/factories/accounts';
 import jwt from 'jsonwebtoken';
 import { BadRequestError, NotFoundError } from '../../errors';

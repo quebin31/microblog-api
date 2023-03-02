@@ -9,9 +9,9 @@ export default <Config>{
   coveragePathIgnorePatterns: ['.*\.d\.ts', 'dist'],
   testPathIgnorePatterns: ['<rootDir>/dist'],
   setupFilesAfterEnv: [
-    '<rootDir>/src/test/prisma.ts',
-    '<rootDir>/src/test/redis.ts',
-    '<rootDir>/src/test/sendgrid.ts',
+    '<rootDir>/src/test/mocks/prisma.ts',
+    '<rootDir>/src/test/mocks/redis.ts',
+    '<rootDir>/src/test/mocks/sendgrid.ts',
   ],
   watchPlugins: [
     require.resolve('jest-watch-typeahead/filename'),
