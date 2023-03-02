@@ -26,6 +26,7 @@ model User {
     publicEmail Boolean   @default(false) @map("public_email")
     publicName  Boolean   @default(true) @map("public_name")
     role        Role      @default(user)
+    verified    Boolean   @default(false)
     posts       Post[]
     comments    Comment[]
 

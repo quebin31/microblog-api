@@ -12,6 +12,7 @@ export function createUser(overrides?: Partial<User>): User {
     publicEmail: false,
     publicName: true,
     role: Role.user,
+    verified: false,
     ...overrides,
   };
 }
