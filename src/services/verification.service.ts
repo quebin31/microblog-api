@@ -1,7 +1,7 @@
 import sendGridMail from '@sendgrid/mail';
 import config from '../config';
 import { prisma } from '../prisma';
-import { NotFoundError, TooManyRequestsError } from '../errors';
+import { BadRequestError, NotFoundError, TooManyRequestsError } from '../errors';
 import redisClient from '../redis';
 import { customAlphabet } from 'nanoid/async';
 import { nolookalikes } from 'nanoid-dictionary';
@@ -20,13 +20,34 @@ async function sendEmailWithCode(email: string, verificationCode: string) {
 
 const codeGenerator = customAlphabet(nolookalikes, 6);
 
+const verificationIsVerifiedKey = (id: string) => `verification:${id}:isVerified`;
 const verificationLastTimestampKey = (id: string) => `verification:${id}:lastTimestamp`;
 const verificationCodeKey = (id: string) => `verification:${id}:code`;
+
+export async function isVerified(id: string): Promise<boolean> {
+  const isVerified = await redisClient.get(verificationIsVerifiedKey(id));
+  if (isVerified !== null) {
+    return isVerified === 'true';
+  }
+
+  const user = await prisma.user.findUnique({ where: { id } });
+  if (user === null) {
+    throw new NotFoundError(`Couldn't find user to check verification`);
+  }
+
+  const expiration = 24 * 60 * 60 * 1000; // 24 hours
+  await redisClient.set(verificationIsVerifiedKey(id), user.verified.toString(), { EX: expiration });
+  return user.verified;
+}
 
 export type VerificationInput = { id: string, email?: string }
 
 export async function sendVerificationEmail(input: VerificationInput) {
   const { id, email: maybeEmail } = input;
+
+  if (await isVerified(id)) {
+    throw new BadRequestError('User has already been verified');
+  }
 
   let email;
   if (maybeEmail !== undefined) {
@@ -51,4 +72,3 @@ export async function sendVerificationEmail(input: VerificationInput) {
   await redisClient.set(verificationCodeKey(id), verificationCode, { EX: expiration });
   await sendEmailWithCode(email, verificationCode);
 }
-
