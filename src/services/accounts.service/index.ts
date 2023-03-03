@@ -51,15 +51,16 @@ export const accountsService = {
     return { id: user.id, accessToken };
   },
 
-  async getAccount(id: string): Promise<AccountResponse> {
+  async getAccount(id: string, callerId?: string): Promise<AccountResponse> {
     const user = await accountsDb.findById(id);
-    if (!user || !user.verified) {
+    const isOwner = id === callerId;
+    if (!user || !user.verified && !isOwner) {
       throw new NotFoundError(`Couldn't find user with id ${id}`);
     }
 
     return {
-      email: user.publicEmail ? user.email : null,
-      name: user.publicName ? user.name : null,
+      email: user.publicEmail || user.id === callerId ? user.email : null,
+      name: user.publicName || user.id === callerId ? user.name : null,
       role: user.role,
     };
   },
@@ -86,8 +87,8 @@ export const accountsService = {
         });
 
       return {
-        email: updated.publicEmail ? updated.email : null,
-        name: updated.publicName ? updated.name : null,
+        email: updated.email,
+        name: updated.name,
         role: updated.role,
       };
     }

@@ -3,6 +3,7 @@ import asyncHandler from 'express-async-handler';
 import * as accountsController from '../controllers/accounts.controller';
 import { validateSchema } from '../middlewares/schemas';
 import { authMiddleware } from '../middlewares/auth';
+import { optional } from '../middlewares/util';
 import {
   patchAccountSchema,
   signInSchema,
@@ -18,7 +19,7 @@ router.post('/resend-email', authMiddleware, asyncHandler(accountsController.res
 
 const verifyMiddlewares = [authMiddleware, validateSchema(verificationSchema)];
 router.post('/verify-email', ...verifyMiddlewares, asyncHandler(accountsController.verifyEmail));
-router.get('/:id', asyncHandler(accountsController.getAccount));
+router.get('/:id', optional(authMiddleware), asyncHandler(accountsController.getAccount));
 
 const patchAccountMiddlewares = [authMiddleware, validateSchema(patchAccountSchema)];
 router.patch('/:id', ...patchAccountMiddlewares, asyncHandler(accountsController.patchAccount));

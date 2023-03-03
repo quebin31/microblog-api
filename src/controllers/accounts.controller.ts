@@ -25,8 +25,9 @@ export async function verifyEmail(req: Request, res: Response) {
 }
 
 export async function getAccount(req: Request, res: Response) {
+  const callerId = req.subject;
   const userId = req.params.id;
-  const user = await accountsService.getAccount(userId);
+  const user = await accountsService.getAccount(userId, callerId);
   res.status(200).json(user);
 }
 

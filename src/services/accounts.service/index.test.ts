@@ -136,6 +136,17 @@ describe('Get account', () => {
     const expected = { email: user.email, name: null, role: user.role };
     await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
   });
+
+  const verifiedCases = [[false], [true]];
+  test.each(verifiedCases)(
+    'returns all account info if user is the owner (verified: %p)',
+    async (verified) => {
+      const user = createUser({ verified, publicEmail: false, publicName: false });
+      accountsDbMock.findById.mockResolvedValue(user);
+
+      const expected = { email: user.email, name: user.name, role: user.role };
+      await expect(accountsService.getAccount(user.id, user.id)).resolves.toEqual(expected);
+    });
 });
 
 describe('Update account', () => {
@@ -205,8 +216,8 @@ describe('Update account', () => {
       await expect(accountsService.updateAccount(user.id, user.id, data))
         .resolves
         .toEqual({
-          email: castedData?.publicEmail ? user.email : null,
-          name: castedData?.publicName ? (castedData?.name || user.name) : null,
+          email: user.email,
+          name: castedData?.name || user.name,
           role: user.role,
         });
     });
