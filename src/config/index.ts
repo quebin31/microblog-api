@@ -56,6 +56,6 @@ export default <Config>{
   port: process.env.PORT ?? overrideConfig.port!!,
   logLevel: 'debug',
   redisUrl: process.env.REDIS_URL ?? overrideConfig.redisUrl!!,
-  emailApiKey: process.env.EMAIL_APIKEY ?? overrideConfig.emailApiKey!!,
+  emailApiKey: process.env.EMAIL_API_KEY ?? overrideConfig.emailApiKey!!,
   ...overrideConfig,
 };
