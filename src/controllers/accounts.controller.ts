@@ -23,3 +23,9 @@ export async function verifyEmail(req: Request, res: Response) {
   await verificationService.verifyEmail(userId, req.body);
   res.status(204).send();
 }
+
+export async function getAccount(req: Request, res: Response) {
+  const userId = req.params.id;
+  const user = await accountsService.getAccount(userId);
+  res.status(200).json(user);
+}

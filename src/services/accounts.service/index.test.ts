@@ -7,6 +7,7 @@ import { eventEmitter } from '../../events';
 import { UserEmailVerificationEvent } from '../../events/verification';
 import { VerificationInput } from '../verification.service';
 import { accountsDb } from './database';
+import { randomUUID } from 'crypto';
 
 jest.mock('../../events');
 jest.mock('./database');
@@ -85,5 +86,47 @@ describe('Login flow', () => {
     expect(result).toMatchObject({ id: user.id });
     const decoded = jwt.decode(result.accessToken);
     expect(decoded).toMatchObject({ sub: user.id, role: user.role });
+  });
+});
+
+describe('Get account', () => {
+  test(`fails if user doesn't exists`, async () => {
+    accountsDbMock.findById.mockResolvedValue(null);
+
+    const uuid = randomUUID();
+    await expect(accountsService.getAccount(uuid)).rejects
+      .toEqual(new NotFoundError(`Couldn't find user with id ${uuid}`));
+  });
+
+  test(`fails if user isn't verified`, async () => {
+    const user = createUser({ verified: false });
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    await expect(accountsService.getAccount(user.id)).rejects
+      .toEqual(new NotFoundError(`Couldn't find user with id ${user.id}`));
+  });
+
+  test('returns account if user is found and it is verified', async () => {
+    const user = createUser({ verified: true, publicEmail: true, publicName: true });
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    const expected = { email: user.email, name: user.name, role: user.role };
+    await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
+  });
+
+  test(`returns account with email as null if it's not public`, async () => {
+    const user = createUser({ verified: true, publicEmail: false, publicName: true });
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    const expected = { email: null, name: user.name, role: user.role };
+    await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
+  });
+
+  test(`returns account with name as null if it's not public`, async () => {
+    const user = createUser({ verified: true, publicEmail: true, publicName: false });
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    const expected = { email: user.email, name: null, role: user.role };
+    await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
   });
 });

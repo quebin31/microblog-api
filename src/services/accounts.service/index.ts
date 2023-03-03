@@ -10,6 +10,12 @@ import { accountsDb } from './database';
 
 export type AuthResponse = { id: string, accessToken: string };
 
+export type AccountResponse = {
+  email: string | null,
+  name: string | null,
+  role: Role,
+}
+
 export const accountsService = {
   async signUp(data: SignUpData): Promise<AuthResponse> {
     if (!isValidPassword(data.password)) {
@@ -43,5 +49,18 @@ export const accountsService = {
 
     const accessToken = createJwt({ sub: user.id, role: user.role }, config.jwtSecret);
     return { id: user.id, accessToken };
+  },
+
+  async getAccount(id: string): Promise<AccountResponse> {
+    const user = await accountsDb.findById(id);
+    if (!user || !user.verified) {
+      throw new NotFoundError(`Couldn't find user with id ${id}`);
+    }
+
+    return {
+      email: user.publicEmail ? user.email : null,
+      name: user.publicName ? user.name : null,
+      role: user.role,
+    };
   },
 };

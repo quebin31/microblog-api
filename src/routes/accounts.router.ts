@@ -13,7 +13,7 @@ router.post('/resend-email', authMiddleware, asyncHandler(accountsController.res
 
 const verifyMiddlewares = [authMiddleware, validateSchema(verificationSchema)];
 router.post('/verify-email', ...verifyMiddlewares, asyncHandler(accountsController.verifyEmail));
-router.get('/:id');
+router.get('/:id', asyncHandler(accountsController.getAccount));
 router.patch('/:id');
 
 export default router;
