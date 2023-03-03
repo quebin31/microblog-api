@@ -17,3 +17,9 @@ export async function resendEmail(req: Request, res: Response) {
   await verificationService.sendVerificationEmail({ id: userId });
   res.status(204).send();
 }
+
+export async function verifyEmail(req: Request, res: Response) {
+  const userId = req.subject!!;
+  await verificationService.verifyEmail(userId, req.body);
+  res.status(204).send();
+}

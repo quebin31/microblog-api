@@ -17,6 +17,11 @@ export const signInSchema = z
     password: z.string(),
   });
 
+export const verificationSchema = z.object({
+  verificationCode: z.string(),
+});
+
 export type SignUpData = z.infer<typeof signUpSchema>;
 export type SignInData = z.infer<typeof signInSchema>;
+export type VerificationData = z.infer<typeof verificationSchema>;
 

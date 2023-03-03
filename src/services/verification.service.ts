@@ -5,6 +5,7 @@ import { BadRequestError, NotFoundError, TooManyRequestsError } from '../errors'
 import redisClient from '../redis';
 import { customAlphabet } from 'nanoid/async';
 import { nolookalikes } from 'nanoid-dictionary';
+import { VerificationData } from '../schemas/accounts';
 
 sendGridMail.setApiKey(config.emailApiKey);
 
@@ -24,6 +25,8 @@ const verificationIsVerifiedKey = (id: string) => `verification:${id}:isVerified
 const verificationLastTimestampKey = (id: string) => `verification:${id}:lastTimestamp`;
 const verificationCodeKey = (id: string) => `verification:${id}:code`;
 
+const verificationKeyExpiration = 24 * 60 * 60 * 1000; // 24 hours
+
 export async function isVerified(id: string): Promise<boolean> {
   const isVerified = await redisClient.get(verificationIsVerifiedKey(id));
   if (isVerified !== null) {
@@ -35,8 +38,7 @@ export async function isVerified(id: string): Promise<boolean> {
     throw new NotFoundError(`Couldn't find user to check verification`);
   }
 
-  const expiration = 24 * 60 * 60 * 1000; // 24 hours
-  await redisClient.set(verificationIsVerifiedKey(id), user.verified.toString(), { EX: expiration });
+  await redisClient.set(verificationIsVerifiedKey(id), user.verified.toString(), { EX: verificationKeyExpiration });
   return user.verified;
 }
 
@@ -67,8 +69,30 @@ export async function sendVerificationEmail(input: VerificationInput) {
   }
 
   const verificationCode = await codeGenerator();
-  const expiration = 24 * 60 * 60 * 1000; // 24 hours
-  await redisClient.set(verificationLastTimestampKey(id), Date.now().toString(), { EX: expiration });
-  await redisClient.set(verificationCodeKey(id), verificationCode, { EX: expiration });
+  await redisClient.set(verificationLastTimestampKey(id), Date.now().toString(), { EX: verificationKeyExpiration });
+  await redisClient.set(verificationCodeKey(id), verificationCode, { EX: verificationKeyExpiration });
   await sendEmailWithCode(email, verificationCode);
+}
+
+export async function verifyEmail(id: string, data: VerificationData) {
+  const savedCode = await redisClient.get(verificationCodeKey(id));
+  if (savedCode === null) {
+    throw new NotFoundError(`Couldn't find an active verification code`);
+  }
+
+  if (data.verificationCode !== savedCode) {
+    throw new BadRequestError('Received invalid verification code');
+  }
+
+  const updated = await prisma.user
+    .update({
+      where: { id },
+      data: { verified: true },
+    })
+    .catch((_) => {
+      throw new NotFoundError(`Couldn't find user to verify`);
+    });
+
+  await redisClient.del(verificationCodeKey(id));
+  await redisClient.set(verificationIsVerifiedKey(id), updated.verified.toString(), { EX: verificationKeyExpiration });
 }

@@ -7,6 +7,7 @@ import { redisClientMock } from '../../test/mocks/redis';
 import { sendGridMailMock } from '../../test/mocks/sendgrid';
 import { MailDataRequired } from '@sendgrid/mail';
 import { nolookalikes } from 'nanoid-dictionary';
+import { VerificationData } from '../../schemas/accounts';
 
 describe('Send email verification', function() {
   test('fails if no user exists with given id', async () => {
@@ -43,7 +44,7 @@ describe('Send email verification', function() {
 
   const successCases = [[false], [true]];
   test.each(successCases)(
-    'sends email and updates Redis keys on success (provided email: %p)',
+    'sends email and updates cache keys on success (provided email: %p)',
     async (withEmail) => {
       const before = Date.now();
       const user = createUser();
@@ -74,4 +75,60 @@ describe('Send email verification', function() {
       expect(emailData.text).toEqual(`Confirmation code: ${verificationCode}`);
       expect(emailData.html).toEqual(`Confirmation code: <strong>${verificationCode}</strong>`);
     });
+});
+
+describe('Verify email', () => {
+  test('fails if verification code is not present in cache', async () => {
+    const user = createUser();
+    const data: VerificationData = { verificationCode: 'ABC123' };
+
+    redisClientMock.get.mockResolvedValueOnce(null);
+
+    await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
+      new NotFoundError(`Couldn't find an active verification code`),
+    );
+  });
+
+  test(`fails if verification codes don't match`, async () => {
+    const user = createUser();
+    const data: VerificationData = { verificationCode: 'ABC123' };
+
+    redisClientMock.get.mockResolvedValueOnce('123ABC');
+
+    await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
+      new BadRequestError('Received invalid verification code'),
+    );
+  });
+
+  test(`fails if user doesn't exist`, async () => {
+    const user = createUser();
+    const data: VerificationData = { verificationCode: 'ABC123' };
+
+    prismaMock.user.update.mockRejectedValueOnce(new Error(''));
+    redisClientMock.get.mockResolvedValueOnce('ABC123');
+
+    await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
+      new NotFoundError(`Couldn't find user to verify`),
+    );
+  });
+
+  test('updates user verified state if codes match', async () => {
+    const user = createUser();
+    const updated = createUser({ ...user, verified: true });
+    const data: VerificationData = { verificationCode: 'ABC123' };
+
+    prismaMock.user.update.mockResolvedValueOnce(updated);
+    redisClientMock.get.mockResolvedValueOnce('ABC123');
+
+    await verificationService.verifyEmail(user.id, data);
+
+    expect(prismaMock.user.update).toHaveBeenCalledTimes(1);
+    expect(prismaMock.user.update).toHaveBeenCalledWith({
+      where: { id: user.id },
+      data: { verified: true },
+    });
+
+    expect(redisClientMock.del).toHaveBeenCalledTimes(1);
+    expect(redisClientMock.set).toHaveBeenCalledTimes(1);
+  });
 });
