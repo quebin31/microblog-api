@@ -21,14 +21,40 @@ async function sendEmailWithCode(email: string, verificationCode: string) {
 
 const codeGenerator = customAlphabet(nolookalikes, 6);
 
-const verificationIsVerifiedKey = (id: string) => `verification:${id}:isVerified`;
-const verificationLastTimestampKey = (id: string) => `verification:${id}:lastTimestamp`;
-const verificationCodeKey = (id: string) => `verification:${id}:code`;
+export const verificationCache = {
+  isVerifiedKey: (id: string) => `verification:${id}:isVerified`,
+  requestedAtKey: (id: string) => `verification:${id}:requestedAt`,
+  codeKey: (id: string) => `verification:${id}:code`,
+  expiration: 24 * 60 * 60 * 1000, // 24 hours
 
-const verificationKeyExpiration = 24 * 60 * 60 * 1000; // 24 hours
+  isVerified: {
+    get: async (id: string) => redisClient.get(verificationCache.isVerifiedKey(id)),
+    set: async (id: string, verified: boolean) => {
+      const key = verificationCache.isVerifiedKey(id);
+      return redisClient.set(key, `${verified}`, { EX: verificationCache.expiration });
+    },
+  },
+
+  requestedAt: {
+    get: async (id: string) => redisClient.get(verificationCache.requestedAtKey(id)),
+    set: async (id: string, timestamp: number) => {
+      const key = verificationCache.requestedAtKey(id);
+      return redisClient.set(key, `${timestamp}`, { EX: verificationCache.expiration });
+    },
+  },
+
+  code: {
+    get: async (id: string) => redisClient.get(verificationCache.codeKey(id)),
+    del: async (id: string) => redisClient.del(verificationCache.codeKey(id)),
+    set: async (id: string, code: string) => {
+      const key = verificationCache.codeKey(id);
+      return redisClient.set(key, code, { EX: verificationCache.expiration });
+    },
+  },
+};
 
 export async function isVerified(id: string): Promise<boolean> {
-  const isVerified = await redisClient.get(verificationIsVerifiedKey(id));
+  const isVerified = await verificationCache.isVerified.get(id);
   if (isVerified !== null) {
     return isVerified === 'true';
   }
@@ -38,7 +64,7 @@ export async function isVerified(id: string): Promise<boolean> {
     throw new NotFoundError(`Couldn't find user to check verification`);
   }
 
-  await redisClient.set(verificationIsVerifiedKey(id), user.verified.toString(), { EX: verificationKeyExpiration });
+  await verificationCache.isVerified.set(id, user.verified);
   return user.verified;
 }
 
@@ -63,19 +89,19 @@ export async function sendVerificationEmail(input: VerificationInput) {
     email = user.email;
   }
 
-  const lastTimestamp = await redisClient.get(verificationLastTimestampKey(id));
-  if (lastTimestamp !== null && parseInt(lastTimestamp) + 60 * 1000 > Date.now()) {
+  const requestedAt = await verificationCache.requestedAt.get(id);
+  if (requestedAt !== null && parseInt(requestedAt) + 60 * 1000 > Date.now()) {
     throw new TooManyRequestsError('Email verifications can only be sent every 60 seconds');
   }
 
   const verificationCode = await codeGenerator();
-  await redisClient.set(verificationLastTimestampKey(id), Date.now().toString(), { EX: verificationKeyExpiration });
-  await redisClient.set(verificationCodeKey(id), verificationCode, { EX: verificationKeyExpiration });
+  await verificationCache.requestedAt.set(id, Date.now());
+  await verificationCache.code.set(id, verificationCode);
   await sendEmailWithCode(email, verificationCode);
 }
 
 export async function verifyEmail(id: string, data: VerificationData) {
-  const savedCode = await redisClient.get(verificationCodeKey(id));
+  const savedCode = await verificationCache.code.get(id);
   if (savedCode === null) {
     throw new NotFoundError(`Couldn't find an active verification code`);
   }
@@ -93,6 +119,6 @@ export async function verifyEmail(id: string, data: VerificationData) {
       throw new NotFoundError(`Couldn't find user to verify`);
     });
 
-  await redisClient.del(verificationCodeKey(id));
-  await redisClient.set(verificationIsVerifiedKey(id), updated.verified.toString(), { EX: verificationKeyExpiration });
+  await verificationCache.code.del(id);
+  await verificationCache.isVerified.set(id, updated.verified);
 }

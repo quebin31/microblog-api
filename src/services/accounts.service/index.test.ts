@@ -1,5 +1,4 @@
-import * as accountsService from '../accounts.service';
-import { prismaMock } from '../../test/mocks/prisma';
+import { accountsService } from './index';
 import { createSignInData, createSignUpData, createUser } from '../../test/factories/accounts';
 import jwt from 'jsonwebtoken';
 import { BadRequestError, NotFoundError } from '../../errors';
@@ -7,13 +6,17 @@ import { saltPassword } from '../../utils/auth';
 import { eventEmitter } from '../../events';
 import { UserEmailVerificationEvent } from '../../events/verification';
 import { VerificationInput } from '../verification.service';
+import { accountsDb } from './database';
 
 jest.mock('../../events');
+jest.mock('./database');
+
+const accountsDbMock = accountsDb as jest.Mocked<typeof accountsDb>;
 
 describe('Create new account', () => {
   test('fails if email is already registered', async () => {
     const data = createSignUpData();
-    prismaMock.user.create.mockRejectedValueOnce(new Error());
+    accountsDbMock.createNewUser.mockRejectedValueOnce(new Error());
 
     await expect(accountsService.signUp(data)).rejects
       .toEqual(new BadRequestError('Email already registered'));
@@ -32,7 +35,7 @@ describe('Create new account', () => {
   test('returns access token on success', async () => {
     const data = createSignUpData();
     const user = createUser(data);
-    prismaMock.user.create.mockResolvedValueOnce(user);
+    accountsDbMock.createNewUser.mockResolvedValueOnce(user);
 
     const result = await accountsService.signUp(data);
 
@@ -44,7 +47,7 @@ describe('Create new account', () => {
   test('triggers email verification event on success', async () => {
     const data = createSignUpData();
     const user = createUser(data);
-    prismaMock.user.create.mockResolvedValueOnce(user);
+    accountsDbMock.createNewUser.mockResolvedValueOnce(user);
 
     await accountsService.signUp(data);
 
@@ -57,7 +60,7 @@ describe('Create new account', () => {
 describe('Login flow', () => {
   test(`fails if no account exists with the given email`, async () => {
     const data = createSignInData();
-    prismaMock.user.findUnique.mockResolvedValueOnce(null);
+    accountsDbMock.findByEmail.mockResolvedValueOnce(null);
 
     await expect(accountsService.signIn(data)).rejects
       .toEqual(new NotFoundError('Invalid email or password'));
@@ -66,7 +69,7 @@ describe('Login flow', () => {
   test(`fails if passwords doesn't match`, async () => {
     const user = createUser({ password: await saltPassword('pass1234!') });
     const data = createSignInData({ password: '!1234pass' });
-    prismaMock.user.findUnique.mockResolvedValueOnce(user);
+    accountsDbMock.findByEmail.mockResolvedValueOnce(user);
 
     await expect(accountsService.signIn(data)).rejects
       .toEqual(new NotFoundError('Invalid email or password'));
@@ -75,7 +78,7 @@ describe('Login flow', () => {
   test('returns access token on success', async () => {
     const user = createUser({ password: await saltPassword('pass1234!') });
     const data = createSignInData({ password: 'pass1234!' });
-    prismaMock.user.findUnique.mockResolvedValueOnce(user);
+    accountsDbMock.findByEmail.mockResolvedValueOnce(user);
 
     const result = await accountsService.signIn(data);
 

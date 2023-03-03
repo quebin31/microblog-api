@@ -8,6 +8,7 @@ import { sendGridMailMock } from '../../test/mocks/sendgrid';
 import { MailDataRequired } from '@sendgrid/mail';
 import { nolookalikes } from 'nanoid-dictionary';
 import { VerificationData } from '../../schemas/accounts';
+import { verificationCache } from '../verification.service';
 
 describe('Send email verification', function() {
   test('fails if no user exists with given id', async () => {
@@ -23,7 +24,10 @@ describe('Send email verification', function() {
     'fails if user has already been verified (with cache: %p)',
     async (withCache) => {
       const user = createUser({ verified: true });
-      redisClientMock.get.mockResolvedValueOnce(withCache ? 'true' : null);
+
+      redisClientMock.get
+        .calledWith(verificationCache.isVerifiedKey(user.id))
+        .mockResolvedValueOnce(withCache ? 'true' : null);
       prismaMock.user.findUnique.mockResolvedValueOnce(user);
 
       await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects.toEqual(
@@ -33,8 +37,12 @@ describe('Send email verification', function() {
 
   test('fails if not enough time has passed since last sent', async () => {
     const user = createUser();
-    redisClientMock.get.mockResolvedValueOnce(null);
-    redisClientMock.get.mockResolvedValueOnce(Date.now().toString());
+    redisClientMock.get
+      .calledWith(verificationCache.isVerifiedKey(user.id))
+      .mockResolvedValueOnce(null);
+    redisClientMock.get
+      .calledWith(verificationCache.requestedAtKey(user.id))
+      .mockResolvedValueOnce(Date.now().toString());
     prismaMock.user.findUnique.mockResolvedValue(user);
 
     await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects.toEqual(
@@ -50,8 +58,12 @@ describe('Send email verification', function() {
       const user = createUser();
       const input = { id: user.id, email: withEmail ? user.email : undefined };
 
-      redisClientMock.get.mockResolvedValueOnce(null); // already verified
-      redisClientMock.get.mockResolvedValueOnce(null); // timestamp
+      redisClientMock.get
+        .calledWith(verificationCache.isVerifiedKey(user.id))
+        .mockResolvedValueOnce(null);
+      redisClientMock.get
+        .calledWith(verificationCache.requestedAtKey(user.id))
+        .mockResolvedValueOnce(null);
       prismaMock.user.findUnique.mockResolvedValue(user);
 
       await verificationService.sendVerificationEmail(input);
@@ -82,7 +94,9 @@ describe('Verify email', () => {
     const user = createUser();
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    redisClientMock.get.mockResolvedValueOnce(null);
+    redisClientMock.get
+      .calledWith(verificationCache.codeKey(user.id))
+      .mockResolvedValueOnce(null);
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new NotFoundError(`Couldn't find an active verification code`),
@@ -105,7 +119,9 @@ describe('Verify email', () => {
     const data: VerificationData = { verificationCode: 'ABC123' };
 
     prismaMock.user.update.mockRejectedValueOnce(new Error(''));
-    redisClientMock.get.mockResolvedValueOnce('ABC123');
+    redisClientMock.get
+      .calledWith(verificationCache.codeKey(user.id))
+      .mockResolvedValueOnce('ABC123');
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new NotFoundError(`Couldn't find user to verify`),
@@ -118,7 +134,9 @@ describe('Verify email', () => {
     const data: VerificationData = { verificationCode: 'ABC123' };
 
     prismaMock.user.update.mockResolvedValueOnce(updated);
-    redisClientMock.get.mockResolvedValueOnce('ABC123');
+    redisClientMock.get
+      .calledWith(verificationCache.codeKey(user.id))
+      .mockResolvedValueOnce('ABC123');
 
     await verificationService.verifyEmail(user.id, data);
 
@@ -129,6 +147,7 @@ describe('Verify email', () => {
     });
 
     expect(redisClientMock.del).toHaveBeenCalledTimes(1);
+    expect(redisClientMock.del).toHaveBeenCalledWith(verificationCache.codeKey(user.id));
     expect(redisClientMock.set).toHaveBeenCalledTimes(1);
   });
 });
