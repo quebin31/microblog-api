@@ -6,6 +6,7 @@ export type ErrorCode = 'internal_server_error'
   | 'bad_request'
   | 'not_found'
   | 'too_many_requests'
+  | 'forbidden'
 
 export type Rejection = {
   [key: string]: unknown
@@ -51,5 +52,11 @@ export class NotFoundError extends RejectError {
 export class TooManyRequestsError extends RejectError {
   get rejection(): Rejection {
     return { status: 429, code: 'too_many_requests', message: this.message };
+  }
+}
+
+export class ForbiddenError extends RejectError {
+  get rejection(): Rejection {
+    return { status: 403, code: 'forbidden', message: this.message };
   }
 }
