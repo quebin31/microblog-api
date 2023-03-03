@@ -53,21 +53,24 @@ AccountInfoResponse:
       enum: [ user, moderator, admin ]
 
 AccountInfoUpdate:
-  type: object
-  properties:
-    name:
-      description: The new user's name (it can only be changed by the user)
-      type: string
-    role:
-      description: The new user's role (only admins can change a user's role)
-      type: string
-      enum: [ user, moderator ]
-    publicEmail:
-      description: Whether or not the user's email should be public (it can only be changed by the user)
-      type: boolean
-    publicName:
-      description: Whether or not the user's name should be public (it can only be changed by the user)
-      type: boolean
+  oneOf:
+    - type: object
+      properties:
+        role:
+          description: The new user's role (only admins can change a user's role)
+          type: string
+          enum: [ user, moderator ]
+    - type: object
+      properties:
+        name:
+          description: The new user's name (it can only be changed by the user)
+          type: string
+        publicEmail:
+          description: Whether or not the user's email should be public (it can only be changed by the user)
+          type: boolean
+        publicName:
+          description: Whether or not the user's name should be public (it can only be changed by the user)
+          type: boolean
 
 VerifyEmailRequest:
   type: object
