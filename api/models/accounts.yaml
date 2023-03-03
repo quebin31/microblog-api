@@ -39,12 +39,12 @@ AccountInfoResponse:
   type: object
   properties:
     email:
-      description: The user's email (if public, otherwise `null`)
+      description: The user's email (if public or caller is the owner, otherwise `null`)
       type: string
       format: email
       nullable: true
     name:
-      description: The user's name (if public, otherwise `null`)
+      description: The user's name (if public or caller is the owner, otherwise `null`)
       type: string
       nullable: true
     role:
