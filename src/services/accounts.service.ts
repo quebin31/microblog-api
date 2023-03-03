@@ -4,6 +4,9 @@ import { checkPassword, createJwt, isValidPassword, saltPassword } from '../util
 import config from '../config';
 import { Role } from '@prisma/client';
 import { BadRequestError, NotFoundError } from '../errors';
+import { eventEmitter } from '../events';
+import { UserEmailVerificationEvent } from '../events/verification';
+import { VerificationInput } from './verification.service';
 
 export type AuthResponse = { id: string, accessToken: string };
 
@@ -22,6 +25,9 @@ export async function signUp(data: SignUpData): Promise<AuthResponse> {
     });
 
   const accessToken = createJwt({ sub: user.id, role: Role.user }, config.jwtSecret);
+
+  const verificationInput: VerificationInput = { id: user.id, email: user.email };
+  eventEmitter.emit(UserEmailVerificationEvent, verificationInput);
   return { id: user.id, accessToken };
 }
 

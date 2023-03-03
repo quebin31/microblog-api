@@ -2,6 +2,7 @@ import server from './server';
 import config from './config';
 import logger from './logger';
 import redisClient from './redis';
+import { startCollectingEvents } from './events';
 
 async function main() {
   logger.info('Connecting to Redis...');
@@ -9,6 +10,7 @@ async function main() {
   logger.info('Successfully connected to Redis!');
 
   server.listen(parseInt(config.port), () => {
+    startCollectingEvents();
     logger.info(`Listening on http://localhost:${config.port}`);
   });
 }

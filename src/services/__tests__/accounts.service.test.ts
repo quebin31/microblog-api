@@ -4,6 +4,11 @@ import { createSignInData, createSignUpData, createUser } from '../../test/facto
 import jwt from 'jsonwebtoken';
 import { BadRequestError, NotFoundError } from '../../errors';
 import { saltPassword } from '../../utils/auth';
+import { eventEmitter } from '../../events';
+import { UserEmailVerificationEvent } from '../../events/verification';
+import { VerificationInput } from '../verification.service';
+
+jest.mock('../../events');
 
 describe('Create new account', () => {
   test('fails if email is already registered', async () => {
@@ -34,6 +39,18 @@ describe('Create new account', () => {
     expect(result).toMatchObject({ id: user.id });
     const decoded = jwt.decode(result.accessToken);
     expect(decoded).toMatchObject({ sub: user.id, role: user.role });
+  });
+
+  test('triggers email verification event on success', async () => {
+    const data = createSignUpData();
+    const user = createUser(data);
+    prismaMock.user.create.mockResolvedValueOnce(user);
+
+    await accountsService.signUp(data);
+
+    expect(eventEmitter.emit).toHaveBeenCalledTimes(1);
+    const input: VerificationInput = { id: user.id, email: user.email };
+    expect(eventEmitter.emit).toHaveBeenCalledWith(UserEmailVerificationEvent, input);
   });
 });
 
