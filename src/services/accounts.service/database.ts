@@ -1,5 +1,6 @@
 import { SignUpData } from '../../schemas/accounts';
 import { prisma } from '../../prisma';
+import { User } from '@prisma/client';
 
 export const accountsDb = {
   async createNewUser(data: SignUpData) {
@@ -16,5 +17,9 @@ export const accountsDb = {
 
   async verifyUser(id: string) {
     return prisma.user.update({ where: { id }, data: { verified: true } });
+  },
+
+  async updateUser(id: string, data: Partial<User>) {
+    return prisma.user.update({ where: { id }, data: data });
   },
 };

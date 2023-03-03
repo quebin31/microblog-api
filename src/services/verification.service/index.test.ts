@@ -8,13 +8,18 @@ import { nolookalikes } from 'nanoid-dictionary';
 import { VerificationData } from '../../schemas/accounts';
 import { accountsDb } from '../accounts.service/database';
 import { verificationCache } from './cache';
-import { DeepMockProxy } from 'jest-mock-extended';
+import { DeepMockProxy, MockProxy, mockReset } from 'jest-mock-extended';
 
 jest.mock('../accounts.service/database');
 jest.mock('./cache');
 
-const accountsDbMock = accountsDb as jest.Mocked<typeof accountsDb>;
+const accountsDbMock = accountsDb as MockProxy<typeof accountsDb>;
 const verificationCacheMock = verificationCache as DeepMockProxy<typeof verificationCache>;
+
+beforeEach(() => {
+  mockReset(accountsDbMock);
+  mockReset(verificationCacheMock);
+});
 
 describe('Send email verification', function() {
   test('fails if no user exists with given id', async () => {

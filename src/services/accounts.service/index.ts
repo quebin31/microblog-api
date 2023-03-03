@@ -1,8 +1,8 @@
-import { SignInData, SignUpData } from '../../schemas/accounts';
+import { PatchAccountData, SignInData, SignUpData } from '../../schemas/accounts';
 import { checkPassword, createJwt, isValidPassword, saltPassword } from '../../utils/auth';
 import config from '../../config';
 import { Role } from '@prisma/client';
-import { BadRequestError, NotFoundError } from '../../errors';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../../errors';
 import { eventEmitter } from '../../events';
 import { UserEmailVerificationEvent } from '../../events/verification';
 import { VerificationInput } from '../verification.service';
@@ -62,5 +62,34 @@ export const accountsService = {
       name: user.publicName ? user.name : null,
       role: user.role,
     };
+  },
+
+  async updateAccount(id: string, updaterId: string, data: PatchAccountData): Promise<AccountResponse> {
+    if ('role' in data) {
+      const updater = await accountsDb.findById(updaterId);
+      if (!updater || updater.role !== 'admin') {
+        throw new ForbiddenError('Only admins can change roles');
+      }
+
+      const updated = await accountsDb.updateUser(id, data);
+      return {
+        email: updated.publicEmail ? updated.email : null,
+        name: updated.publicName ? updated.name : null,
+        role: updated.role,
+      };
+    } else if (id !== updaterId) {
+      throw new ForbiddenError(`Cannot update account`);
+    } else {
+      const updated = await accountsDb.updateUser(id, data)
+        .catch((_) => {
+          throw new NotFoundError(`Couldn't find user with id ${id}`);
+        });
+
+      return {
+        email: updated.publicEmail ? updated.email : null,
+        name: updated.publicName ? updated.name : null,
+        role: updated.role,
+      };
+    }
   },
 };

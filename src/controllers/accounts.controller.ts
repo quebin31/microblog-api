@@ -29,3 +29,10 @@ export async function getAccount(req: Request, res: Response) {
   const user = await accountsService.getAccount(userId);
   res.status(200).json(user);
 }
+
+export async function patchAccount(req: Request, res: Response) {
+  const callerId = req.subject!!;
+  const userId = req.params.id;
+  const updated = await accountsService.updateAccount(userId, callerId, req.body);
+  res.status(200).json(updated);
+}

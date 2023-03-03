@@ -1,4 +1,7 @@
 import { z } from 'zod';
+import { Role } from '@prisma/client';
+
+const name = z.string().min(2).max(64);
 
 const authShape = {
   email: z.string().email(),
@@ -7,9 +10,7 @@ const authShape = {
 
 export const signUpSchema = z
   .object(authShape)
-  .extend({
-    name: z.string().min(2).max(64),
-  });
+  .extend({ name });
 
 export const signInSchema = z
   .object(authShape)
@@ -21,7 +22,22 @@ export const verificationSchema = z.object({
   verificationCode: z.string(),
 });
 
+export const patchAccountSchema = z.union([
+  z
+    .object({
+      role: z.enum([Role.user, Role.moderator]),
+    }),
+  z
+    .object({
+      name,
+      publicEmail: z.boolean(),
+      publicName: z.boolean(),
+    })
+    .partial(),
+]);
+
 export type SignUpData = z.infer<typeof signUpSchema>;
 export type SignInData = z.infer<typeof signInSchema>;
 export type VerificationData = z.infer<typeof verificationSchema>;
+export type PatchAccountData = z.infer<typeof patchAccountSchema>;
 

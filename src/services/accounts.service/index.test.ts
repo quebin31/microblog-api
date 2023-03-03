@@ -1,18 +1,25 @@
 import { accountsService } from './index';
 import { createSignInData, createSignUpData, createUser } from '../../test/factories/accounts';
 import jwt from 'jsonwebtoken';
-import { BadRequestError, NotFoundError } from '../../errors';
+import { BadRequestError, ForbiddenError, NotFoundError } from '../../errors';
 import { saltPassword } from '../../utils/auth';
 import { eventEmitter } from '../../events';
 import { UserEmailVerificationEvent } from '../../events/verification';
 import { VerificationInput } from '../verification.service';
 import { accountsDb } from './database';
 import { randomUUID } from 'crypto';
+import { PatchAccountData } from '../../schemas/accounts';
+import { Role } from '@prisma/client';
+import { MockProxy, mockReset } from 'jest-mock-extended';
 
 jest.mock('../../events');
 jest.mock('./database');
 
-const accountsDbMock = accountsDb as jest.Mocked<typeof accountsDb>;
+const accountsDbMock = accountsDb as MockProxy<typeof accountsDb>;
+
+beforeEach(() => {
+  mockReset(accountsDbMock);
+});
 
 describe('Create new account', () => {
   test('fails if email is already registered', async () => {
@@ -129,4 +136,78 @@ describe('Get account', () => {
     const expected = { email: user.email, name: null, role: user.role };
     await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
   });
+});
+
+describe('Update account', () => {
+  test(`fails to update if user doesn't exist`, async () => {
+    accountsDbMock.updateUser.mockRejectedValue(new Error());
+
+    const uuid = randomUUID();
+    await expect(accountsService.updateAccount(uuid, uuid, {})).rejects
+      .toEqual(new NotFoundError(`Couldn't find user with id ${uuid}`));
+  });
+
+  const updateCases: PatchAccountData[][] = [
+    [{ name: 'New name' }],
+    [{ publicEmail: true }],
+    [{ publicName: true }],
+  ];
+
+  test.each(updateCases)(`fails to update personal info if it's not the owner (%p)`, async (data) => {
+    const user = createUser({ name: 'Old', publicName: false, publicEmail: false });
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    const otherUuid = randomUUID();
+    await expect(accountsService.updateAccount(user.id, otherUuid, data)).rejects
+      .toEqual(new ForbiddenError('Cannot update account'));
+  });
+
+  test.each([[Role.user], [Role.moderator]])(
+    `fails to change role if caller's role is %p`,
+    async (otherRole) => {
+      const caller = createUser({ role: otherRole });
+      const user = createUser({ role: Role.user });
+
+      accountsDbMock.findById.calledWith(caller.id).mockResolvedValue(caller);
+      accountsDbMock.findById.calledWith(user.id).mockResolvedValue(user);
+
+      await expect(accountsService.updateAccount(user.id, caller.id, { role: Role.moderator }))
+        .rejects
+        .toEqual(new ForbiddenError('Only admins can change roles'));
+    });
+
+  test('succeeds to change role if caller is an admin', async () => {
+    const caller = createUser({ role: Role.admin });
+    const user = createUser({ role: Role.user });
+
+    accountsDbMock.findById.calledWith(caller.id).mockResolvedValue(caller);
+    accountsDbMock.findById.calledWith(user.id).mockResolvedValue(user);
+    accountsDbMock.updateUser.mockResolvedValue({ ...user, role: Role.moderator });
+
+    await expect(accountsService.updateAccount(user.id, caller.id, { role: Role.moderator }))
+      .resolves
+      .toEqual({
+        email: null,
+        name: user.name,
+        role: Role.moderator,
+      });
+  });
+
+  test.each(updateCases)(
+    'succeeds to update data if caller is the owner (%p)',
+    async (data) => {
+      const user = createUser({ name: 'Old', publicName: false, publicEmail: false });
+      accountsDbMock.findById.mockResolvedValue(user);
+      accountsDbMock.updateUser.mockResolvedValue({ ...user, ...data });
+
+      const castedData = data as { name?: string, publicEmail?: boolean, publicName?: boolean };
+
+      await expect(accountsService.updateAccount(user.id, user.id, data))
+        .resolves
+        .toEqual({
+          email: castedData?.publicEmail ? user.email : null,
+          name: castedData?.publicName ? (castedData?.name || user.name) : null,
+          role: user.role,
+        });
+    });
 });
