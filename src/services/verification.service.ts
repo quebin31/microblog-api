@@ -46,8 +46,9 @@ export async function sendVerificationEmail(input: VerificationInput) {
   }
 
   const verificationCode = await codeGenerator();
-  const expireAt = Date.now() + 24 * 60 * 60 * 1000;
-  await redisClient.set(verificationLastTimestampKey(id), Date.now().toString(), { EX: expireAt });
-  await redisClient.set(verificationCodeKey(id), verificationCode, { EX: expireAt });
+  const expiration = 24 * 60 * 60 * 1000; // 24 hours
+  await redisClient.set(verificationLastTimestampKey(id), Date.now().toString(), { EX: expiration });
+  await redisClient.set(verificationCodeKey(id), verificationCode, { EX: expiration });
   await sendEmailWithCode(email, verificationCode);
 }
+
