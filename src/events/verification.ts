@@ -1,5 +1,5 @@
 import { VerificationInput } from '../services/verification.service';
-import * as verificationService from '../services/verification.service';
+import { verificationService } from '../services/verification.service';
 import logger from '../logger';
 
 export const UserEmailVerificationEvent = Symbol('user_email_verification_event');

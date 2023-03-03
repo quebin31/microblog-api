@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { accountsService } from '../services/accounts.service';
-import * as verificationService from '../services/verification.service';
+import { verificationService } from '../services/verification.service';
 
 export async function signUp(req: Request, res: Response) {
   const result = await accountsService.signUp(req.body);

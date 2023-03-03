@@ -1,18 +1,24 @@
-import { prismaMock } from '../../test/mocks/prisma';
-import * as verificationService from '../verification.service';
+import { verificationService } from './index';
 import { randomUUID } from 'crypto';
 import { BadRequestError, NotFoundError, TooManyRequestsError } from '../../errors';
 import { createUser } from '../../test/factories/accounts';
-import { redisClientMock } from '../../test/mocks/redis';
 import { sendGridMailMock } from '../../test/mocks/sendgrid';
 import { MailDataRequired } from '@sendgrid/mail';
 import { nolookalikes } from 'nanoid-dictionary';
 import { VerificationData } from '../../schemas/accounts';
-import { verificationCache } from '../verification.service';
+import { accountsDb } from '../accounts.service/database';
+import { verificationCache } from './cache';
+import { DeepMockProxy } from 'jest-mock-extended';
+
+jest.mock('../accounts.service/database');
+jest.mock('./cache');
+
+const accountsDbMock = accountsDb as jest.Mocked<typeof accountsDb>;
+const verificationCacheMock = verificationCache as DeepMockProxy<typeof verificationCache>;
 
 describe('Send email verification', function() {
   test('fails if no user exists with given id', async () => {
-    prismaMock.user.findUnique.mockResolvedValueOnce(null);
+    accountsDbMock.findById.mockResolvedValue(null);
 
     await expect(verificationService.sendVerificationEmail({ id: randomUUID() })).rejects.toEqual(
       new NotFoundError(`Couldn't find user to send email`),
@@ -25,29 +31,22 @@ describe('Send email verification', function() {
     async (withCache) => {
       const user = createUser({ verified: true });
 
-      redisClientMock.get
-        .calledWith(verificationCache.isVerifiedKey(user.id))
-        .mockResolvedValueOnce(withCache ? 'true' : null);
-      prismaMock.user.findUnique.mockResolvedValueOnce(user);
+      accountsDbMock.findById.mockResolvedValue(user);
+      verificationCacheMock.isVerified.get.mockResolvedValue(withCache ? 'true' : null);
 
-      await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects.toEqual(
-        new BadRequestError('User has already been verified'),
-      );
+      await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects
+        .toEqual(new BadRequestError('User has already been verified'));
     });
 
   test('fails if not enough time has passed since last sent', async () => {
     const user = createUser();
-    redisClientMock.get
-      .calledWith(verificationCache.isVerifiedKey(user.id))
-      .mockResolvedValueOnce(null);
-    redisClientMock.get
-      .calledWith(verificationCache.requestedAtKey(user.id))
-      .mockResolvedValueOnce(Date.now().toString());
-    prismaMock.user.findUnique.mockResolvedValue(user);
 
-    await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects.toEqual(
-      new TooManyRequestsError('Email verifications can only be sent every 60 seconds'),
-    );
+    accountsDbMock.findById.mockResolvedValue(user);
+    verificationCacheMock.requestedAt.get.mockResolvedValue(Date.now().toString());
+    verificationCacheMock.isVerified.get.mockResolvedValue(null);
+
+    await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects
+      .toEqual(new TooManyRequestsError('Email verifications can only be sent every 60 seconds'));
   });
 
   const successCases = [[false], [true]];
@@ -58,21 +57,17 @@ describe('Send email verification', function() {
       const user = createUser();
       const input = { id: user.id, email: withEmail ? user.email : undefined };
 
-      redisClientMock.get
-        .calledWith(verificationCache.isVerifiedKey(user.id))
-        .mockResolvedValueOnce(null);
-      redisClientMock.get
-        .calledWith(verificationCache.requestedAtKey(user.id))
-        .mockResolvedValueOnce(null);
-      prismaMock.user.findUnique.mockResolvedValue(user);
+      accountsDbMock.findById.mockResolvedValue(user);
+      verificationCacheMock.requestedAt.get.mockResolvedValue(null);
+      verificationCacheMock.isVerified.get.mockResolvedValue(null);
 
       await verificationService.sendVerificationEmail(input);
 
-      const lastTimestamp = parseInt(redisClientMock.set.mock.calls[1][1] as string);
-      expect(lastTimestamp).toBeLessThanOrEqual(Date.now());
-      expect(lastTimestamp).toBeGreaterThanOrEqual(before);
+      const requestedAt = verificationCacheMock.requestedAt.set.mock.calls[0][1];
+      expect(requestedAt).toBeLessThanOrEqual(Date.now());
+      expect(requestedAt).toBeGreaterThanOrEqual(before);
 
-      const verificationCode = redisClientMock.set.mock.calls[2][1] as string;
+      const verificationCode = verificationCacheMock.code.set.mock.calls[0][1];
       const regex = new RegExp(`^[${nolookalikes}]{6}$`);
       expect(regex.test(verificationCode)).toBeTruthy();
 
@@ -94,9 +89,7 @@ describe('Verify email', () => {
     const user = createUser();
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    redisClientMock.get
-      .calledWith(verificationCache.codeKey(user.id))
-      .mockResolvedValueOnce(null);
+    verificationCacheMock.code.get.mockResolvedValue(null);
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new NotFoundError(`Couldn't find an active verification code`),
@@ -107,7 +100,7 @@ describe('Verify email', () => {
     const user = createUser();
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    redisClientMock.get.mockResolvedValueOnce('123ABC');
+    verificationCacheMock.code.get.mockResolvedValue('123ABC');
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new BadRequestError('Received invalid verification code'),
@@ -118,10 +111,8 @@ describe('Verify email', () => {
     const user = createUser();
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    prismaMock.user.update.mockRejectedValueOnce(new Error(''));
-    redisClientMock.get
-      .calledWith(verificationCache.codeKey(user.id))
-      .mockResolvedValueOnce('ABC123');
+    accountsDbMock.verifyUser.mockRejectedValueOnce(new Error(''));
+    verificationCacheMock.code.get.mockResolvedValue('ABC123');
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new NotFoundError(`Couldn't find user to verify`),
@@ -133,21 +124,17 @@ describe('Verify email', () => {
     const updated = createUser({ ...user, verified: true });
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    prismaMock.user.update.mockResolvedValueOnce(updated);
-    redisClientMock.get
-      .calledWith(verificationCache.codeKey(user.id))
-      .mockResolvedValueOnce('ABC123');
+    accountsDbMock.verifyUser.mockResolvedValue(updated);
+    verificationCacheMock.code.get.mockResolvedValue('ABC123');
 
     await verificationService.verifyEmail(user.id, data);
 
-    expect(prismaMock.user.update).toHaveBeenCalledTimes(1);
-    expect(prismaMock.user.update).toHaveBeenCalledWith({
-      where: { id: user.id },
-      data: { verified: true },
-    });
+    expect(accountsDbMock.verifyUser).toHaveBeenCalledTimes(1);
+    expect(accountsDbMock.verifyUser).toHaveBeenCalledWith(user.id);
 
-    expect(redisClientMock.del).toHaveBeenCalledTimes(1);
-    expect(redisClientMock.del).toHaveBeenCalledWith(verificationCache.codeKey(user.id));
-    expect(redisClientMock.set).toHaveBeenCalledTimes(1);
+    expect(verificationCacheMock.code.del).toHaveBeenCalledTimes(1);
+    expect(verificationCacheMock.code.del).toHaveBeenCalledWith(user.id);
+    expect(verificationCacheMock.isVerified.set).toHaveBeenCalledTimes(1);
+    expect(verificationCacheMock.isVerified.set).toHaveBeenCalledWith(user.id, true);
   });
 });
