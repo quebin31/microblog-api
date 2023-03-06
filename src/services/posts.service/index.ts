@@ -1,6 +1,7 @@
 import { GetAllOptions, postsDb } from './database';
-import { GetAllParams } from '../../schemas/posts';
+import { GetAllParams, NewPostData } from '../../schemas/posts';
 import { Post, User } from '@prisma/client';
+import { NotFoundError } from '../../errors';
 
 export type PostResponse = {
   id: string,
@@ -66,5 +67,14 @@ export const postsService = {
 
     const mappedPosts = posts.map((post) => mapToPostResponse(post, userId));
     return { posts: mappedPosts, cursor: last?.createdAt || null };
+  },
+
+  async newPost(data: NewPostData, userId: string): Promise<PostResponse> {
+    const post = await postsDb.newPost(data, userId)
+      .catch((_) => {
+        throw new NotFoundError('Invalid user');
+      });
+
+    return mapToPostResponse(post, userId);
   },
 };

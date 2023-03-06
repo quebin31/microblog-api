@@ -10,4 +10,11 @@ export const getAllSchema = z
   })
   .partial();
 
+export const newPostSchema = z.object({
+  title: z.string().min(1).max(128),
+  body: z.string().min(1).max(1024),
+  draft: z.boolean().default(false),
+});
+
 export type GetAllParams = z.infer<typeof getAllSchema>;
+export type NewPostData = z.infer<typeof newPostSchema>;

@@ -3,8 +3,9 @@ import { GetAllOptions, postsDb } from './database';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams } from '../../schemas/posts';
 import { randomUUID } from 'crypto';
-import { createPost } from '../../test/factories/posts';
+import { createNewPostData, createPost } from '../../test/factories/posts';
 import { createUser } from '../../test/factories/accounts';
+import { NotFoundError } from '../../errors';
 
 jest.mock('./database');
 
@@ -143,5 +144,28 @@ describe('Get all posts', () => {
     const options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value).toMatchObject(params);
+  });
+});
+
+describe('Create new post', () => {
+  test('fails if database creation fails (due to user not existing)', async () => {
+    const data = createNewPostData();
+    const user = createUser();
+
+    postsDbMock.newPost.mockRejectedValue(new Error());
+
+    await expect(postsService.newPost(data, user.id)).rejects.toEqual(new NotFoundError('Invalid user'));
+  });
+
+  test('returns newly created post on success', async () => {
+    const user = createUser({ publicName: false });
+    const data = createNewPostData();
+    const post = { ...createPost({ ...data, userId: user.id }), user };
+
+    postsDbMock.newPost.mockResolvedValue(post);
+
+    const expectedPost = mapToPostResponse(post, user.id);
+    await expect(postsService.newPost(data, user.id)).resolves.toEqual(expectedPost);
+    expect(expectedPost.authorName).toEqual(user.name);
   });
 });

@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma';
+import { NewPostData } from '../../schemas/posts';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -25,6 +26,16 @@ export const postsDb = {
       skip: options.cursor !== undefined ? 1 : 0,
       take: options.take,
       cursor,
+      include: { user: true },
+    });
+  },
+
+  async newPost(data: NewPostData, userId: string) {
+    return prisma.post.create({
+      data: {
+        ...data,
+        user: { connect: { id: userId } },
+      },
       include: { user: true },
     });
   },
