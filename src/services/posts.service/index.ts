@@ -13,7 +13,8 @@ export type PostResponse = {
   negativeVotes: number,
   totalVotes: number,
   draft: boolean,
-  lastModifiedAt: Date | null
+  createdAt: Date,
+  lastModifiedAt: Date,
 }
 
 export type PostsResponse = {
@@ -33,6 +34,7 @@ export function mapToPostResponse(post: Post & { user: User }, callerId?: string
     negativeVotes: post.negativeVotes,
     totalVotes: post.positiveVotes + post.negativeVotes,
     draft: post.draft,
+    createdAt: post.createdAt,
     lastModifiedAt: post.updatedAt,
   };
 }
