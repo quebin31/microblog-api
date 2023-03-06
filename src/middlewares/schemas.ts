@@ -13,3 +13,15 @@ export function validateBody(schema: z.Schema) {
     }
   };
 }
+
+export function validateQuery(schema: z.Schema) {
+  return (req: Request, _res: Response, next: NextFunction) => {
+    const result = schema.safeParse(req.query);
+    if (!result.success) {
+      next(new BadRequestError(`Invalid query: ${result.error.message}`));
+    } else {
+      req.query = result.data;
+      next();
+    }
+  };
+}
