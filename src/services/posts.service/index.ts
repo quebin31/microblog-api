@@ -1,9 +1,11 @@
 import { GetAllOptions, postsDb } from './database';
 import { GetAllParams } from '../../schemas/posts';
-import { Post } from '@prisma/client';
+import { Post, User } from '@prisma/client';
 
 export type PostResponse = {
   id: string,
+  authorName: string | null,
+  authorId: string,
   title: string,
   body: string,
   score: number,
@@ -19,9 +21,11 @@ export type PostsResponse = {
   cursor: Date | null,
 }
 
-export function mapToPostResponse(post: Post): PostResponse {
+export function mapToPostResponse(post: Post & { user: User }, callerId?: string): PostResponse {
   return {
     id: post.id,
+    authorName: post.user.publicName || post.user.id === callerId ? post.user.name : null,
+    authorId: post.user.id,
     title: post.title,
     body: post.body,
     score: post.positiveVotes - post.negativeVotes,
@@ -58,6 +62,7 @@ export const postsService = {
     const posts = await postsDb.getAll(options);
     const last = posts.at(posts.length - 1);
 
-    return { posts: posts.map(mapToPostResponse), cursor: last?.createdAt || null };
+    const mappedPosts = posts.map((post) => mapToPostResponse(post, userId));
+    return { posts: mappedPosts, cursor: last?.createdAt || null };
   },
 };

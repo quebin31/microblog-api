@@ -4,6 +4,7 @@ import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams } from '../../schemas/posts';
 import { randomUUID } from 'crypto';
 import { createPost } from '../../test/factories/posts';
+import { createUser } from '../../test/factories/accounts';
 
 jest.mock('./database');
 
@@ -21,26 +22,60 @@ describe('Get all posts', () => {
     await expect(postsService.getAll({})).resolves.toEqual(expected);
   });
 
-  test('returns non-null cursor from last post', async () => {
-    const posts = [createPost(), createPost()];
+  test('returns array and non-null cursor from last post', async () => {
+    const user = createUser();
+    const posts = [
+      { ...createPost({ userId: user.id }), user },
+      { ...createPost({ userId: user.id }), user },
+    ];
+
     postsDbMock.getAll.mockResolvedValue(posts);
 
-    const expected = { posts: posts.map(mapToPostResponse), cursor: posts[1].createdAt };
+    const mappedPosts = posts.map((post) => mapToPostResponse(post));
+    const expected = { posts: mappedPosts, cursor: posts[1].createdAt };
     await expect(postsService.getAll({})).resolves.toEqual(expected);
   });
 
   test(`filtering user with 'self' is the same as using the current user id`, async () => {
     const params: GetAllParams = { user: 'self' };
-    const userId = randomUUID();
-    const posts = [createPost({ userId }), createPost({ userId })];
-    postsDbMock.getAll.mockResolvedValue(posts);
+    const user = createUser();
+    postsDbMock.getAll.mockResolvedValue([]);
 
-    const expected = { posts: posts.map(mapToPostResponse), cursor: posts[1].createdAt };
-    await expect(postsService.getAll(params, userId)).resolves.toEqual(expected);
+    await postsService.getAll(params, user.id);
 
     const options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
-    expect(options.value).toMatchObject({ user: userId });
+    expect(options.value).toMatchObject({ user: user.id });
+  });
+
+  test('author name is hidden based whether or not user name is public', async () => {
+    const user1 = createUser({ publicName: false });
+    const user2 = createUser({ publicName: true });
+    const posts = [
+      { ...createPost({ userId: user1.id }), user: user1 },
+      { ...createPost({ userId: user2.id }), user: user2 },
+    ];
+
+    postsDbMock.getAll.mockResolvedValue(posts);
+
+    const mappedPosts = posts.map((post) => mapToPostResponse(post));
+    const expected = { posts: mappedPosts, cursor: posts[1].createdAt };
+    await expect(postsService.getAll({})).resolves.toEqual(expected);
+    expect(mappedPosts[0].authorName).toBeNull();
+    expect(mappedPosts[1].authorName).toEqual(user2.name);
+  });
+
+  test('author name is shown if post is from caller user', async () => {
+    const user = createUser({ publicName: false });
+    const posts = [{ ...createPost({ userId: user.id }), user }];
+    postsDbMock.getAll.mockResolvedValue(posts);
+
+    await postsService.getAll({}, user.id);
+
+    const mappedPosts = posts.map((post) => mapToPostResponse(post, user.id));
+    const expected = { posts: mappedPosts, cursor: posts[0].createdAt };
+    await expect(postsService.getAll({}, user.id)).resolves.toEqual(expected);
+    expect(mappedPosts[0].authorName).toEqual(user.name);
   });
 
   test(`sort order defaults to 'desc' if undefined`, async () => {

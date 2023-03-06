@@ -25,6 +25,7 @@ export const postsDb = {
       skip: options.cursor !== undefined ? 1 : 0,
       take: options.take,
       cursor,
+      include: { user: true },
     });
   },
 };
