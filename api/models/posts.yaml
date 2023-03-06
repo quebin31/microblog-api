@@ -1,6 +1,10 @@
 Post:
   type: object
   properties:
+    id:
+      description: Post unique id
+      type: string
+      format: uuid
     title:
       type: string
       example: Lorem ipsum dolor sit amet.
