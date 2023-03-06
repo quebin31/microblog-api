@@ -1,6 +1,10 @@
 Comment:
   type: object
   properties:
+    id:
+      description: Comment unique id.
+      type: string
+      format: uuid
     postId:
       description: The post where this comment belongs to.
       type: string
@@ -8,6 +12,13 @@ Comment:
     postTitle:
       description: The post title
       type: string
+    authorName:
+      description: Author name, may be null if their name is not public.
+      type: string
+      nullable: true
+    authorId:
+      type: string
+      format: uuid
     body:
       type: string
       example: |

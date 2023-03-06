@@ -5,6 +5,13 @@ Post:
       description: Post unique id
       type: string
       format: uuid
+    authorName:
+      description: Author name, may be null if their name is not public.
+      type: string
+      nullable: true
+    authorId:
+      type: string
+      format: uuid
     title:
       type: string
       example: Lorem ipsum dolor sit amet.
