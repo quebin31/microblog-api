@@ -10,6 +10,10 @@ export type GetAllOptions = {
 
 export const postsDb = {
   async getAll(options: GetAllOptions) {
+    const cursor = options.cursor !== undefined
+      ? { createdAt: options.cursor }
+      : undefined;
+
     return prisma.post.findMany({
       where: {
         userId: options.user,
@@ -20,9 +24,7 @@ export const postsDb = {
       },
       skip: options.cursor !== undefined ? 1 : 0,
       take: options.take,
-      cursor: {
-        createdAt: options?.cursor,
-      },
+      cursor,
     });
   },
 };
