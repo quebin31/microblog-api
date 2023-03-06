@@ -40,7 +40,7 @@ export const postsService = {
       case 'published':
         filterDraft = false;
         break;
-      case 'drafts'  :
+      case 'drafts':
         filterDraft = true;
         break;
       default:
