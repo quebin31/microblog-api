@@ -48,9 +48,14 @@ export const postsService = {
         filterDraft = false;
         break;
       case 'drafts':
-        filterDraft = true;
-        break;
+        if (userId !== undefined) {
+          filterDraft = true;
+          break;
+        } else {
+          return { posts: [], cursor: null };
+        }
       default:
+        filterDraft = userId !== undefined ? undefined : false;
         break;
     }
 

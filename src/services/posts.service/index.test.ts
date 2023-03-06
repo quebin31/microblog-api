@@ -100,11 +100,26 @@ describe('Get all posts', () => {
     expect(options.value).toMatchObject({ take: takeDefault });
   });
 
-  test(`include = 'all' doesn't filter posts`, async () => {
+  test(`include = 'all' only includes published posts if no user is defined`, async () => {
     postsDbMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({ include: 'all' });
     await postsService.getAll({}); // defaults to 'all'
+
+    let options = captor<GetAllOptions>();
+    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(options.value.filterDraft).toBeFalsy();
+    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(options.value.filterDraft).toBeFalsy();
+  });
+
+  test(`include = 'all' includes published and draft posts if user is defined`, async () => {
+    const user = createUser();
+    postsDbMock.getAll.mockResolvedValue([]);
+
+
+    await postsService.getAll({ include: 'all' }, user.id);
+    await postsService.getAll({}, user.id); // defaults to 'all'
 
     let options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
@@ -123,14 +138,21 @@ describe('Get all posts', () => {
     expect(options.value).toMatchObject({ filterDraft: false });
   });
 
-  test(`include = 'drafts' filters posts that are drafts`, async () => {
+  test(`include = 'drafts' filters posts that are drafts only if user is defined`, async () => {
     postsDbMock.getAll.mockResolvedValue([]);
 
-    await postsService.getAll({ include: 'drafts' });
+    await postsService.getAll({ include: 'drafts' }, randomUUID());
 
     const options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value).toMatchObject({ filterDraft: true });
+  });
+
+  test(`include = 'drafts' returns early if no user is defined`, async () => {
+    postsDbMock.getAll.mockResolvedValue([{ ...createPost(), user: createUser() }]);
+
+    const expected = { posts: [], cursor: null };
+    await expect(postsService.getAll({ include: 'drafts' })).resolves.toEqual(expected);
   });
 
   test('other params are passed as options to database query', async () => {
