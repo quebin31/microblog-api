@@ -8,7 +8,7 @@ import { nolookalikes } from 'nanoid-dictionary';
 import { VerificationData } from '../../schemas/accounts';
 import { accountsDb } from '../accounts.service/database';
 import { verificationCache } from './cache';
-import { DeepMockProxy, MockProxy, mockReset } from 'jest-mock-extended';
+import { captor, DeepMockProxy, MockProxy, mockReset } from 'jest-mock-extended';
 
 jest.mock('../accounts.service/database');
 jest.mock('./cache');
@@ -68,22 +68,27 @@ describe('Send email verification', function() {
 
       await verificationService.sendVerificationEmail(input);
 
-      const requestedAt = verificationCacheMock.requestedAt.set.mock.calls[0][1];
-      expect(requestedAt).toBeLessThanOrEqual(Date.now());
-      expect(requestedAt).toBeGreaterThanOrEqual(before);
+      const requestedAtCaptor = captor<number>();
+      expect(verificationCacheMock.requestedAt.set).toHaveBeenCalledWith(user.id, requestedAtCaptor);
+      expect(requestedAtCaptor.value).toBeLessThanOrEqual(Date.now());
+      expect(requestedAtCaptor.value).toBeGreaterThanOrEqual(before);
 
-      const verificationCode = verificationCacheMock.code.set.mock.calls[0][1];
+      const verificationCodeCaptor = captor<string>()
+      expect(verificationCacheMock.code.set).toHaveBeenCalledWith(user.id, verificationCodeCaptor);
       const regex = new RegExp(`^[${nolookalikes}]{6}$`);
-      expect(regex.test(verificationCode)).toBeTruthy();
+      const verificationCode = verificationCodeCaptor.value
+      expect(regex.test(verificationCodeCaptor.value)).toBeTruthy();
 
       expect(sendGridMailMock.send).toHaveBeenCalledTimes(1);
-      const emailData = sendGridMailMock.send.mock.calls[0][0] as MailDataRequired;
-      expect(emailData).toMatchObject({
+      const emailDataCaptor = captor<MailDataRequired>()
+      expect(sendGridMailMock.send).toHaveBeenCalledWith(emailDataCaptor)
+      expect(emailDataCaptor.value).toMatchObject({
         from: 'kevindelcastillo@ravn.co',
         to: user.email,
         subject: 'Confirm your Microblog account',
       });
 
+      const emailData = emailDataCaptor.value
       expect(emailData.text).toEqual(`Confirmation code: ${verificationCode}`);
       expect(emailData.html).toEqual(`Confirmation code: <strong>${verificationCode}</strong>`);
     });
