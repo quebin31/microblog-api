@@ -4,24 +4,19 @@ import * as accountsController from '../controllers/accounts.controller';
 import { validateSchema } from '../middlewares/schemas';
 import { authMiddleware } from '../middlewares/auth';
 import { optional } from '../middlewares/util';
-import {
-  patchAccountSchema,
-  signInSchema,
-  signUpSchema,
-  verificationSchema,
-} from '../schemas/accounts';
+import * as schemas from '../schemas/accounts';
 
 const router = Router();
 
-router.post('/sign-up', validateSchema(signUpSchema), asyncHandler(accountsController.signUp));
-router.post('/sign-in', validateSchema(signInSchema), asyncHandler(accountsController.signIn));
+router.post('/sign-up', validateSchema(schemas.signUpSchema), asyncHandler(accountsController.signUp));
+router.post('/sign-in', validateSchema(schemas.signInSchema), asyncHandler(accountsController.signIn));
 router.post('/resend-email', authMiddleware, asyncHandler(accountsController.resendEmail));
 
-const verifyMiddlewares = [authMiddleware, validateSchema(verificationSchema)];
+const verifyMiddlewares = [authMiddleware, validateSchema(schemas.verificationSchema)];
 router.post('/verify-email', ...verifyMiddlewares, asyncHandler(accountsController.verifyEmail));
 router.get('/:id', optional(authMiddleware), asyncHandler(accountsController.getAccount));
 
-const patchAccountMiddlewares = [authMiddleware, validateSchema(patchAccountSchema)];
+const patchAccountMiddlewares = [authMiddleware, validateSchema(schemas.patchAccountSchema)];
 router.patch('/:id', ...patchAccountMiddlewares, asyncHandler(accountsController.patchAccount));
 
 export default router;
