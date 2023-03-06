@@ -30,7 +30,7 @@ export const postsDb = {
     });
   },
 
-  async newPost(data: NewPostData, userId: string) {
+  async createNewPost(data: NewPostData, userId: string) {
     return prisma.post.create({
       data: {
         ...data,

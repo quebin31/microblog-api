@@ -75,7 +75,7 @@ export const postsService = {
   },
 
   async newPost(data: NewPostData, userId: string): Promise<PostResponse> {
-    const post = await postsDb.newPost(data, userId)
+    const post = await postsDb.createNewPost(data, userId)
       .catch((_) => {
         throw new NotFoundError('Invalid user');
       });

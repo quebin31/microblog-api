@@ -174,7 +174,7 @@ describe('Create new post', () => {
     const data = createNewPostData();
     const user = createUser();
 
-    postsDbMock.newPost.mockRejectedValue(new Error());
+    postsDbMock.createNewPost.mockRejectedValue(new Error());
 
     await expect(postsService.newPost(data, user.id)).rejects.toEqual(new NotFoundError('Invalid user'));
   });
@@ -184,7 +184,7 @@ describe('Create new post', () => {
     const data = createNewPostData();
     const post = { ...createPost({ ...data, userId: user.id }), user };
 
-    postsDbMock.newPost.mockResolvedValue(post);
+    postsDbMock.createNewPost.mockResolvedValue(post);
 
     const expectedPost = mapToPostResponse(post, user.id);
     await expect(postsService.newPost(data, user.id)).resolves.toEqual(expectedPost);
