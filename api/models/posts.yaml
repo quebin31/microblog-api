@@ -36,11 +36,14 @@ Post:
         Whether or not this post is a draft (not yet published). Only included when returning posts from the 
         authenticated user.
       type: boolean
-    lastModifiedAt:
-      description: Last time this post was modified (null if it hasn't been modified)
+    createdAt:
+      description: When this post was created.
       type: string
       format: date-time
-      nullable: true
+    lastModifiedAt:
+      description: Last time this post was modified.
+      type: string
+      format: date-time
 
 PostsResponse:
   type: object

@@ -40,11 +40,14 @@ Comment:
         Whether or not this comment is a draft (not yet published). Only included when returning comments from the 
         authenticated user.
       type: boolean
-    lastModifiedAt:
-      description: Last time this comment was modified (null if it hasn't been modified)
+    createdAt:
+      description: When this comment was created.
       type: string
       format: date-time
-      nullable: true
+    lastModifiedAt:
+      description: Last time this comment was modified.
+      type: string
+      format: date-time
 
 CommentsResponse:
   type: object
