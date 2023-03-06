@@ -209,7 +209,7 @@ paths:
           required: false
           description: |
             Filter by a specific user, can receive a `<uuid>` or the special value `self` to filter for the 
-            authenticated user. Will return all posts if no value is provided.
+            authenticated user. Will return posts from all users if no value is provided.
           schema:
             type: string
             enum: [ <uuid>, self ]
