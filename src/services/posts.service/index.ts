@@ -82,4 +82,13 @@ export const postsService = {
 
     return mapToPostResponse(post, userId);
   },
+
+  async getPost(id: string, userId?: string) {
+    const post = await postsDb.findPostById(id);
+    if (!post || (post.draft && post.userId !== userId)) {
+      throw new NotFoundError(`Couldn't find post with id ${id}`);
+    }
+
+    return mapToPostResponse(post);
+  },
 };

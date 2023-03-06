@@ -191,3 +191,53 @@ describe('Create new post', () => {
     expect(expectedPost.authorName).toEqual(user.name);
   });
 });
+
+describe('Get a single post', () => {
+  test(`fails if post with the provided id doesn't exist`, async () => {
+    const postId = randomUUID();
+    postsDbMock.findPostById.mockResolvedValue(null);
+
+    await expect(postsService.getPost(postId)).rejects
+      .toEqual(new NotFoundError(`Couldn't find post with id ${postId}`));
+  });
+
+  test(`fails if post is a draft and user wasn't defined`, async () => {
+    const user = createUser();
+    const post = { ...createPost({ draft: true, userId: user.id }), user };
+    postsDbMock.findPostById.mockResolvedValue(post);
+
+    await expect(postsService.getPost(post.id)).rejects
+      .toEqual(new NotFoundError(`Couldn't find post with id ${post.id}`));
+  });
+
+  test(`fails if post is a draft and user id doesn't match`, async () => {
+    const user = createUser();
+    const post = { ...createPost({ draft: true, userId: user.id }), user };
+    postsDbMock.findPostById.mockResolvedValue(post);
+
+    await expect(postsService.getPost(post.id, randomUUID())).rejects
+      .toEqual(new NotFoundError(`Couldn't find post with id ${post.id}`));
+  });
+
+  test('returns draft if provided user id matches', async () => {
+    const user = createUser();
+    const post = { ...createPost({ draft: true, userId: user.id }), user };
+    postsDbMock.findPostById.mockResolvedValue(post);
+
+    const expected = mapToPostResponse(post, post.userId);
+    await expect(postsService.getPost(post.id, post.userId)).resolves.toEqual(expected);
+  });
+
+  const withUserCases = [[false], [true]];
+  test.each(withUserCases)(
+    'returns published post (with user defined: %p)',
+    async (withUser) => {
+      const user = createUser();
+      const post = { ...createPost({ userId: user.id }), user };
+      postsDbMock.findPostById.mockResolvedValue(post);
+
+      const userId = withUser ? post.userId : undefined;
+      const expected = mapToPostResponse(post, userId);
+      await expect(postsService.getPost(post.id, userId)).resolves.toEqual(expected);
+    });
+});

@@ -12,3 +12,10 @@ export async function newPost(req: Request, res: Response) {
   const response = await postsService.newPost(req.body, userId);
   res.status(201).json(response);
 }
+
+export async function getPost(req: Request, res: Response) {
+  const postId = req.params.id;
+  const userId = req.subject;
+  const response = await postsService.getPost(postId, userId);
+  res.status(200).json(response);
+}

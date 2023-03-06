@@ -14,7 +14,7 @@ router.get('/', ...getAllMiddlewares, asyncHandler(postsController.getAllPosts))
 const newPostMiddlewares = [authMiddleware, validateBody(newPostSchema)];
 router.post('/', ...newPostMiddlewares, asyncHandler(postsController.newPost));
 
-router.get('/:id');
+router.get('/:id', optional(authMiddleware), asyncHandler(postsController.getPost));
 router.patch('/:id');
 router.delete('/:id');
 
