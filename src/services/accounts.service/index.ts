@@ -72,7 +72,11 @@ export const accountsService = {
         throw new ForbiddenError('Only admins can change roles');
       }
 
-      const updated = await accountsDb.updateUser(id, data);
+      const updated = await accountsDb.updateUser(id, data)
+        .catch((_) => {
+          throw new NotFoundError(`Couldn't find user with id ${id}`);
+        });
+
       return {
         email: updated.publicEmail ? updated.email : null,
         name: updated.publicName ? updated.name : null,
