@@ -6,11 +6,9 @@ export default <Config>{
   testEnvironment: 'node',
   verbose: true,
   collectCoverageFrom: ['src/**/*.ts'],
-  coveragePathIgnorePatterns: ['.*\.d\.ts', 'dist'],
+  coveragePathIgnorePatterns: ['.*\.d\.ts', 'dist', 'test'],
   testPathIgnorePatterns: ['<rootDir>/dist'],
   setupFilesAfterEnv: [
-    '<rootDir>/src/test/mocks/prisma.ts',
-    '<rootDir>/src/test/mocks/redis.ts',
     '<rootDir>/src/test/mocks/sendgrid.ts',
   ],
   watchPlugins: [
