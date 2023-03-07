@@ -1,7 +1,7 @@
 import { GetAllOptions, postsDb } from './database';
-import { GetAllParams, NewPostData } from '../../schemas/posts';
+import { GetAllParams, NewPostData, PatchPostData } from '../../schemas/posts';
 import { Post, User } from '@prisma/client';
-import { NotFoundError } from '../../errors';
+import { BadRequestError, NotFoundError } from '../../errors';
 
 export type PostResponse = {
   id: string,
@@ -89,6 +89,19 @@ export const postsService = {
       throw new NotFoundError(`Couldn't find post with id ${id}`);
     }
 
-    return mapToPostResponse(post);
+    return mapToPostResponse(post, userId);
+  },
+
+  async updatePost(id: string, data: PatchPostData, userId: string) {
+    if (data.draft === true) {
+      throw new BadRequestError('Posts cannot be turned into drafts');
+    }
+
+    const updated = await postsDb.updatePost(id, data, userId)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find post with id ${id} to update`);
+      });
+
+    return mapToPostResponse(updated, userId);
   },
 };

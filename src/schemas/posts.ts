@@ -16,5 +16,13 @@ export const newPostSchema = z.object({
   draft: z.boolean().default(false),
 });
 
+export const patchPostSchema = newPostSchema
+  .pick({ body: true })
+  .extend({
+    draft: z.boolean(),
+  })
+  .partial();
+
 export type GetAllParams = z.infer<typeof getAllSchema>;
 export type NewPostData = z.infer<typeof newPostSchema>;
+export type PatchPostData = z.infer<typeof patchPostSchema>;

@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { validateBody, validateQuery } from '../middlewares/schemas';
-import { getAllSchema, newPostSchema } from '../schemas/posts';
+import { getAllSchema, newPostSchema, patchPostSchema } from '../schemas/posts';
 import asyncHandler from 'express-async-handler';
 import * as postsController from '../controllers/posts.controller';
 import { authMiddleware } from '../middlewares/auth';
@@ -15,7 +15,10 @@ const newPostMiddlewares = [authMiddleware, validateBody(newPostSchema)];
 router.post('/', ...newPostMiddlewares, asyncHandler(postsController.newPost));
 
 router.get('/:id', optional(authMiddleware), asyncHandler(postsController.getPost));
-router.patch('/:id');
+
+const patchPostMiddlewares = [authMiddleware, validateBody(patchPostSchema)];
+router.patch('/:id', ...patchPostMiddlewares, asyncHandler(postsController.patchPost));
+
 router.delete('/:id');
 
 export default router;

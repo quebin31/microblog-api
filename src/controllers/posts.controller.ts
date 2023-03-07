@@ -19,3 +19,10 @@ export async function getPost(req: Request, res: Response) {
   const response = await postsService.getPost(postId, userId);
   res.status(200).json(response);
 }
+
+export async function patchPost(req: Request, res: Response) {
+  const postId = req.params.id;
+  const userId = req.subject!!;
+  const updated = await postsService.updatePost(postId, req.body, userId);
+  res.status(200).json(updated);
+}

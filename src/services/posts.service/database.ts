@@ -1,5 +1,5 @@
 import { prisma } from '../../prisma';
-import { NewPostData } from '../../schemas/posts';
+import { NewPostData, PatchPostData } from '../../schemas/posts';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -45,5 +45,26 @@ export const postsDb = {
       where: { id },
       include: { user: true },
     });
+  },
+
+  async updatePost(id: string, data: PatchPostData, userId: string) {
+    const { posts, ...user } = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        posts: {
+          update: {
+            where: { id },
+            data: data,
+          },
+        },
+      },
+      include: {
+        posts: {
+          where: { id },
+        },
+      },
+    });
+
+    return { ...posts.at(0)!!, user };
   },
 };

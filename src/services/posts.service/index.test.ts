@@ -1,11 +1,11 @@
 import { mapToPostResponse, postsService } from './index';
 import { GetAllOptions, postsDb } from './database';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
-import { GetAllParams } from '../../schemas/posts';
+import { GetAllParams, PatchPostData } from '../../schemas/posts';
 import { randomUUID } from 'crypto';
 import { createNewPostData, createPost } from '../../test/factories/posts';
 import { createUser } from '../../test/factories/accounts';
-import { NotFoundError } from '../../errors';
+import { BadRequestError, NotFoundError } from '../../errors';
 
 jest.mock('./database');
 
@@ -232,12 +232,50 @@ describe('Get a single post', () => {
   test.each(withUserCases)(
     'returns published post (with user defined: %p)',
     async (withUser) => {
-      const user = createUser();
+      const user = createUser({ publicName: false });
       const post = { ...createPost({ userId: user.id }), user };
       postsDbMock.findPostById.mockResolvedValue(post);
 
       const userId = withUser ? post.userId : undefined;
       const expected = mapToPostResponse(post, userId);
       await expect(postsService.getPost(post.id, userId)).resolves.toEqual(expected);
+      if (withUser) {
+        expect(expected.authorName).toEqual(user.name);
+      } else {
+        expect(expected.authorName).toBeNull();
+      }
     });
+});
+
+describe('Update a post', () => {
+  test(`fails if draft = true (published post cannot be turned into a draft)`, async () => {
+    const post = createPost();
+    const data: PatchPostData = { draft: true };
+
+    await expect(postsService.updatePost(post.id, data, post.userId)).rejects
+      .toEqual(new BadRequestError('Posts cannot be turned into drafts'));
+  });
+
+  test('fails with not found if database update fails', async () => {
+    const post = createPost();
+    postsDbMock.updatePost.mockRejectedValue(new Error());
+
+    await expect(postsService.updatePost(post.id, {}, post.userId)).rejects
+      .toEqual(new NotFoundError(`Couldn't find post with id ${post.id} to update`));
+  });
+
+  test('returns updated post on success', async () => {
+    const user = createUser({ publicName: false });
+    const post = createPost({ draft: true, body: 'old body', userId: user.id });
+    const data: PatchPostData = { draft: false, body: 'new body' };
+    const updated = { ...post, ...data, user };
+    const expected = mapToPostResponse(updated, user.id);
+
+    postsDbMock.updatePost.mockResolvedValue(updated);
+
+    await expect(postsService.updatePost(post.id, data, user.id)).resolves
+      .toEqual(expected);
+
+    expect(expected.authorName).toEqual(user.name);
+  });
 });
