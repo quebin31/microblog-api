@@ -3,7 +3,7 @@ import { GetAllOptions, postsDb } from './database';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams, PatchPostData } from '../../schemas/posts';
 import { randomUUID } from 'crypto';
-import { createNewPostData, createPost } from '../../test/factories/posts';
+import { createNewPostData, createPost, createFullPost } from '../../test/factories/posts';
 import { createUser } from '../../test/factories/accounts';
 import { BadRequestError, NotFoundError } from '../../errors';
 import { Role } from '@prisma/client';
@@ -22,7 +22,7 @@ beforeEach(() => {
 describe('Map post to response', () => {
   test('transforms post into a response model', () => {
     const user = createUser({ publicName: true });
-    const post = { ...createPost({ userId: user.id }), user };
+    const post = createFullPost({ user });
     const expected: PostResponse = {
       id: post.id,
       authorName: user.name,
@@ -43,21 +43,21 @@ describe('Map post to response', () => {
 
   test(`returns name with 'null' if it's not public`, () => {
     const user = createUser({ publicName: false });
-    const post = { ...createPost({ userId: user.id }), user };
+    const post = createFullPost({ user });
 
     expect(mapToPostResponse(post).authorName).toBeNull();
   });
 
   test(`returns name with 'null' if it's not public and user id doesn't match`, () => {
     const user = createUser({ publicName: false });
-    const post = { ...createPost({ userId: user.id }), user };
+    const post = createFullPost({ user });
 
     expect(mapToPostResponse(post, 'other-uuid').authorName).toBeNull();
   });
 
   test(`returns name if user id matches (even if it's not public)`, () => {
     const user = createUser({ publicName: false });
-    const post = { ...createPost({ userId: user.id }), user };
+    const post = createFullPost({ user });
 
     expect(mapToPostResponse(post, user.id).authorName).toEqual(user.name);
   });
@@ -73,10 +73,7 @@ describe('Get all posts', () => {
 
   test('returns array and non-null cursor from last post', async () => {
     const user = createUser();
-    const posts = [
-      { ...createPost({ userId: user.id }), user },
-      { ...createPost({ userId: user.id }), user },
-    ];
+    const posts = [createFullPost({ user }), createFullPost({ user })];
 
     postsDbMock.getAll.mockResolvedValue(posts);
 
@@ -100,10 +97,7 @@ describe('Get all posts', () => {
   test('author name is hidden based whether or not user name is public', async () => {
     const user1 = createUser({ publicName: false });
     const user2 = createUser({ publicName: true });
-    const posts = [
-      { ...createPost({ userId: user1.id }), user: user1 },
-      { ...createPost({ userId: user2.id }), user: user2 },
-    ];
+    const posts = [createFullPost({ user: user1 }), createFullPost({ user: user2 })];
 
     postsDbMock.getAll.mockResolvedValue(posts);
 
@@ -116,7 +110,7 @@ describe('Get all posts', () => {
 
   test('author name is shown if post is from caller user', async () => {
     const user = createUser({ publicName: false });
-    const posts = [{ ...createPost({ userId: user.id }), user }];
+    const posts = [createFullPost({ user })];
     postsDbMock.getAll.mockResolvedValue(posts);
 
     await postsService.getAll({}, user.id);
@@ -197,7 +191,8 @@ describe('Get all posts', () => {
   });
 
   test(`include = 'drafts' returns early if no user is defined`, async () => {
-    postsDbMock.getAll.mockResolvedValue([{ ...createPost(), user: createUser() }]);
+    const posts = [createFullPost()];
+    postsDbMock.getAll.mockResolvedValue(posts);
 
     const expected = { posts: [], cursor: null };
     await expect(postsService.getAll({ include: 'drafts' })).resolves.toEqual(expected);
@@ -230,7 +225,7 @@ describe('Create new post', () => {
   test('returns newly created post on success', async () => {
     const user = createUser({ publicName: false });
     const data = createNewPostData();
-    const post = { ...createPost({ ...data, userId: user.id }), user };
+    const post = createFullPost({ user });
 
     postsDbMock.createNewPost.mockResolvedValue(post);
 
@@ -251,7 +246,7 @@ describe('Get a single post', () => {
 
   test(`fails if post is a draft and user wasn't defined`, async () => {
     const user = createUser();
-    const post = { ...createPost({ draft: true, userId: user.id }), user };
+    const post = createFullPost({ user, draft: true });
     postsDbMock.findPostById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id)).rejects
@@ -260,7 +255,7 @@ describe('Get a single post', () => {
 
   test(`fails if post is a draft and user id doesn't match`, async () => {
     const user = createUser();
-    const post = { ...createPost({ draft: true, userId: user.id }), user };
+    const post = createFullPost({ user, draft: true });
     postsDbMock.findPostById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id, randomUUID())).rejects
@@ -269,7 +264,7 @@ describe('Get a single post', () => {
 
   test('returns draft if provided user id matches', async () => {
     const user = createUser();
-    const post = { ...createPost({ draft: true, userId: user.id }), user };
+    const post = createFullPost({ user, draft: true });
     postsDbMock.findPostById.mockResolvedValue(post);
 
     const expected = mapToPostResponse(post, post.userId);
@@ -281,7 +276,7 @@ describe('Get a single post', () => {
     'returns published post (with user defined: %p)',
     async (withUser) => {
       const user = createUser({ publicName: false });
-      const post = { ...createPost({ userId: user.id }), user };
+      const post = createFullPost({ user });
       postsDbMock.findPostById.mockResolvedValue(post);
 
       const userId = withUser ? post.userId : undefined;
@@ -314,9 +309,9 @@ describe('Update a post', () => {
 
   test('returns updated post on success', async () => {
     const user = createUser({ publicName: false });
-    const post = createPost({ draft: true, body: 'old body', userId: user.id });
+    const post = createFullPost({ user, draft: true, body: 'old body' });
     const data: PatchPostData = { draft: false, body: 'new body' };
-    const updated = { ...post, ...data, user };
+    const updated = { ...post, ...data };
     const expected = mapToPostResponse(updated, user.id);
 
     postsDbMock.updatePost.mockResolvedValue(updated);

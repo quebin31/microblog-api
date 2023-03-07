@@ -25,7 +25,9 @@ export type PostsResponse = {
   cursor: Date | null,
 }
 
-export function mapToPostResponse(post: Post & { user: User }, callerId?: string): PostResponse {
+export type FullPost = Post & { user: User }
+
+export function mapToPostResponse(post: FullPost, callerId?: string): PostResponse {
   return {
     ...omit(post, ['user', 'userId', 'updatedAt']),
     authorName: post.user.publicName || post.user.id === callerId ? post.user.name : null,
