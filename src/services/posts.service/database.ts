@@ -3,6 +3,7 @@ import { NewPostData, PatchPostData } from '../../schemas/posts';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
+  skip: number,
   take: number,
   cursor?: Date,
   user?: string,
@@ -24,7 +25,7 @@ export const postsDb = {
         createdAt: options.sort,
       },
       cursor,
-      skip: options.cursor !== undefined ? 1 : 0,
+      skip: options.skip,
       take: options.take,
       include: { user: true },
     });

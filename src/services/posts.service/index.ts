@@ -61,6 +61,7 @@ export const postsService = {
       filterDraft,
       cursor: params.cursor,
       sort: params.sort || 'desc',
+      skip: params.cursor !== undefined ? 1 : 0,
       take: params.take || 30,
       user: params.user === 'self' ? userId : params.user,
     };

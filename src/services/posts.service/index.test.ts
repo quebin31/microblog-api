@@ -198,6 +198,20 @@ describe('Get all posts', () => {
     await expect(postsService.getAll({ include: 'drafts' })).resolves.toEqual(expected);
   });
 
+  test('skips one item if cursor is defined', async () => {
+    postsDbMock.getAll.mockResolvedValue([]);
+
+    await postsService.getAll({});
+    await postsService.getAll({ cursor: new Date() });
+
+    let options = captor<GetAllOptions>();
+    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(options.value).toMatchObject({ skip: 0 });
+
+    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(options.value).toMatchObject({ skip: 1 });
+  });
+
   test('other params are passed as options to database query', async () => {
     const userId = randomUUID();
     const params: GetAllParams = { user: userId, cursor: new Date() };
