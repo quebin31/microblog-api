@@ -67,4 +67,16 @@ export const postsDb = {
 
     return { ...posts.at(0)!!, user };
   },
+
+  async deletePost(id: string, userId?: string) {
+    await prisma.$transaction(async (tx) => {
+      const result = await tx.post.deleteMany({
+        where: { id, userId },
+      });
+
+      if (result.count !== 1) {
+        throw new Error();
+      }
+    });
+  },
 };

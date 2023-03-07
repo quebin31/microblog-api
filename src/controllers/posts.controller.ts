@@ -26,3 +26,10 @@ export async function patchPost(req: Request, res: Response) {
   const updated = await postsService.updatePost(postId, req.body, userId);
   res.status(200).json(updated);
 }
+
+export async function deletePost(req: Request, res: Response) {
+  const postId = req.params.id;
+  const userId = req.subject!!;
+  await postsService.deletePost(postId, userId);
+  res.status(204).send();
+}

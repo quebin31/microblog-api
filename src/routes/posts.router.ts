@@ -19,6 +19,6 @@ router.get('/:id', optional(authMiddleware), asyncHandler(postsController.getPos
 const patchPostMiddlewares = [authMiddleware, validateBody(patchPostSchema)];
 router.patch('/:id', ...patchPostMiddlewares, asyncHandler(postsController.patchPost));
 
-router.delete('/:id');
+router.delete('/:id', authMiddleware, asyncHandler(postsController.deletePost));
 
 export default router;

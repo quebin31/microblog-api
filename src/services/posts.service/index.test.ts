@@ -6,10 +6,14 @@ import { randomUUID } from 'crypto';
 import { createNewPostData, createPost } from '../../test/factories/posts';
 import { createUser } from '../../test/factories/accounts';
 import { BadRequestError, NotFoundError } from '../../errors';
+import { Role } from '@prisma/client';
+import { accountsDb } from '../accounts.service/database';
 
 jest.mock('./database');
+jest.mock('../accounts.service/database');
 
 const postsDbMock = postsDb as MockProxy<typeof postsDb>;
+const accountsDbMock = accountsDb as MockProxy<typeof accountsDb>;
 
 beforeEach(() => {
   mockReset(postsDbMock);
@@ -321,5 +325,34 @@ describe('Update a post', () => {
       .toEqual(expected);
 
     expect(expected.authorName).toEqual(user.name);
+  });
+});
+
+describe('Delete a post', () => {
+  const roleCases: Role[][] = [[Role.user], [Role.moderator], [Role.admin]];
+  test.each(roleCases)(`fails if post doesn't exist (role: %p)`, async (role: Role) => {
+    const user = createUser({ role });
+    const postId = randomUUID();
+
+    accountsDbMock.findById.mockResolvedValue(user);
+    const userId = role === 'user' ? user.id : undefined;
+    postsDbMock.deletePost.calledWith(postId, userId).mockRejectedValue(new Error());
+
+    await expect(postsService.deletePost(postId, user.id)).rejects
+      .toEqual(new NotFoundError(`Couldn't find post with id ${postId} to delete`));
+  });
+
+  test.each(roleCases)('deletes post if it exists (role: %p)', async (role: Role) => {
+    const user = createUser({ role });
+    const postId = randomUUID();
+
+    accountsDbMock.findById.mockResolvedValue(user);
+    postsDbMock.deletePost.mockResolvedValue();
+
+    await postsService.deletePost(postId, user.id);
+
+    const userId = role === 'user' ? user.id : undefined;
+    expect(postsDbMock.deletePost).toHaveBeenCalledTimes(1);
+    expect(postsDbMock.deletePost).toHaveBeenCalledWith(postId, userId);
   });
 });

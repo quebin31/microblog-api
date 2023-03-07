@@ -2,6 +2,7 @@ import { GetAllOptions, postsDb } from './database';
 import { GetAllParams, NewPostData, PatchPostData } from '../../schemas/posts';
 import { Post, User } from '@prisma/client';
 import { BadRequestError, NotFoundError } from '../../errors';
+import { accountsService } from '../accounts.service';
 
 export type PostResponse = {
   id: string,
@@ -103,5 +104,13 @@ export const postsService = {
       });
 
     return mapToPostResponse(updated, userId);
+  },
+
+  async deletePost(id: string, userId: string) {
+    const privileged = await accountsService.isModeratorOrAdmin(userId);
+    await postsDb.deletePost(id, privileged ? undefined : userId)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find post with id ${id} to delete`);
+      });
   },
 };
