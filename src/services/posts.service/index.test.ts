@@ -15,6 +15,50 @@ beforeEach(() => {
   mockReset(postsDbMock);
 });
 
+describe('Map to Post response', () => {
+  test('transforms post into a response model', () => {
+    const user = createUser({ publicName: true });
+    const post = { ...createPost({ userId: user.id }), user };
+    const expected = {
+      id: post.id,
+      authorName: user.name,
+      authorId: user.id,
+      title: post.title,
+      body: post.body,
+      score: post.positiveVotes - post.negativeVotes,
+      positiveVotes: post.positiveVotes,
+      negativeVotes: post.negativeVotes,
+      totalVotes: post.positiveVotes + post.negativeVotes,
+      draft: post.draft,
+      createdAt: post.createdAt,
+      lastModifiedAt: post.updatedAt,
+    };
+
+    expect(mapToPostResponse(post)).toStrictEqual(expected);
+  });
+
+  test(`returns name with 'null' if it's not public`, () => {
+    const user = createUser({ publicName: false });
+    const post = { ...createPost({ userId: user.id }), user };
+
+    expect(mapToPostResponse(post).authorName).toBeNull();
+  });
+
+  test(`returns name with 'null' if it's not public and user id doesn't match`, () => {
+    const user = createUser({ publicName: false });
+    const post = { ...createPost({ userId: user.id }), user };
+
+    expect(mapToPostResponse(post, 'other-uuid').authorName).toBeNull();
+  });
+
+  test(`returns name if user id matches (even if it's not public)`, () => {
+    const user = createUser({ publicName: false });
+    const post = { ...createPost({ userId: user.id }), user };
+
+    expect(mapToPostResponse(post, user.id).authorName).toEqual(user.name);
+  });
+});
+
 describe('Get all posts', () => {
   test('returns null cursor if array is empty', async () => {
     postsDbMock.getAll.mockResolvedValue([]);
