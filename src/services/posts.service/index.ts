@@ -3,6 +3,7 @@ import { GetAllParams, NewPostData, PatchPostData } from '../../schemas/posts';
 import { Post, User } from '@prisma/client';
 import { BadRequestError, NotFoundError } from '../../errors';
 import { accountsService } from '../accounts.service';
+import { omit } from '../../utils/types';
 
 export type PostResponse = {
   id: string,
@@ -26,17 +27,11 @@ export type PostsResponse = {
 
 export function mapToPostResponse(post: Post & { user: User }, callerId?: string): PostResponse {
   return {
-    id: post.id,
+    ...omit(post, ['user', 'userId', 'updatedAt']),
     authorName: post.user.publicName || post.user.id === callerId ? post.user.name : null,
     authorId: post.user.id,
-    title: post.title,
-    body: post.body,
     score: post.positiveVotes - post.negativeVotes,
-    positiveVotes: post.positiveVotes,
-    negativeVotes: post.negativeVotes,
     totalVotes: post.positiveVotes + post.negativeVotes,
-    draft: post.draft,
-    createdAt: post.createdAt,
     lastModifiedAt: post.updatedAt,
   };
 }

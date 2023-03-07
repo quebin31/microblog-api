@@ -1,4 +1,4 @@
-import { mapToPostResponse, postsService } from './index';
+import { mapToPostResponse, PostResponse, postsService } from './index';
 import { GetAllOptions, postsDb } from './database';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams, PatchPostData } from '../../schemas/posts';
@@ -19,11 +19,11 @@ beforeEach(() => {
   mockReset(postsDbMock);
 });
 
-describe('Map to Post response', () => {
+describe('Map post to response', () => {
   test('transforms post into a response model', () => {
     const user = createUser({ publicName: true });
     const post = { ...createPost({ userId: user.id }), user };
-    const expected = {
+    const expected: PostResponse = {
       id: post.id,
       authorName: user.name,
       authorId: user.id,
@@ -38,7 +38,7 @@ describe('Map to Post response', () => {
       lastModifiedAt: post.updatedAt,
     };
 
-    expect(mapToPostResponse(post)).toStrictEqual(expected);
+    expect(mapToPostResponse(post)).toStrictEqual<PostResponse>(expected);
   });
 
   test(`returns name with 'null' if it's not public`, () => {
