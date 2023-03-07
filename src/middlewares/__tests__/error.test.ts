@@ -1,6 +1,7 @@
 import { errorHandler } from '../error';
-import { buildNext, buildReq, buildRes } from '../../test/express';
+import { buildExpressParams } from '../../test/express';
 import { RejectError, Rejection } from '../../errors';
+import { captor } from 'jest-mock-extended';
 
 describe('Error Handler', () => {
   class DummyRejectError extends RejectError {
@@ -22,23 +23,22 @@ describe('Error Handler', () => {
     'responds with rejection from error if it is a RejectError (example with %p)',
     (status) => {
       const err = new DummyRejectError(status);
-      const req = buildReq();
-      const res = buildRes();
-      const next = buildNext();
+      const { req, res, next } = buildExpressParams();
 
       errorHandler(err, req, res, next);
 
       expect(res.status).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(status);
       expect(res.json).toHaveBeenCalledTimes(1);
-      expect(res.json).toHaveBeenCalledWith(err.rejection);
+      expect(res.json).toHaveBeenCalledWith({
+        ...err.rejection,
+        stack: err.stack,
+      });
     });
 
   test('responds with generic rejection if it is an Error', () => {
     const err = new Error('Oops!');
-    const req = buildReq();
-    const res = buildRes();
-    const next = buildNext();
+    const { req, res, next } = buildExpressParams();
 
     errorHandler(err, req, res, next);
 
@@ -49,21 +49,23 @@ describe('Error Handler', () => {
       status: 500,
       code: 'internal_server_error',
       message: 'Oops!',
+      stack: err.stack,
     });
   });
 
   test('responds with generic rejection if it is something else', () => {
     const err = {};
-    const req = buildReq();
-    const res = buildRes();
-    const next = buildNext();
+    const { req, res, next } = buildExpressParams();
 
     errorHandler(err, req, res, next);
 
     expect(res.status).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(500);
+
     expect(res.json).toHaveBeenCalledTimes(1);
-    expect(res.json).toHaveBeenCalledWith(<Rejection>{
+    const json = captor<Rejection>();
+    expect(res.json).toHaveBeenCalledWith(json);
+    expect(json).toMatchObject({
       status: 500,
       code: 'internal_server_error',
       message: 'Something went wrong',

@@ -1,4 +1,3 @@
-import { Response } from 'express';
 import { isNativeError } from 'util/types';
 
 export type ErrorCode = 'internal_server_error'
@@ -18,17 +17,12 @@ export type Rejection = {
 export abstract class RejectError extends Error {
 
   abstract get rejection(): Rejection
-
-  public reject(res: Response) {
-    res.status(this.rejection.status).json(this.rejection);
-  }
 }
 
 export function isRejectError(err: unknown): err is RejectError {
   const castedErr = err as RejectError;
   return isNativeError(err)
-    && castedErr.rejection !== undefined
-    && castedErr.reject !== undefined;
+    && castedErr.rejection !== undefined;
 }
 
 export class UnauthorizedError extends RejectError {

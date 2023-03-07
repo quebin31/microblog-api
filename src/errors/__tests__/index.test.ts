@@ -1,5 +1,4 @@
 import { isRejectError, RejectError, Rejection } from '../index';
-import { buildRes } from '../../test/express';
 
 describe('Reject errors', () => {
   class DummyRejectError extends RejectError {
@@ -11,18 +10,6 @@ describe('Reject errors', () => {
       };
     }
   }
-
-  test('rejects response with received rejection', () => {
-    const res = buildRes();
-    const err = new DummyRejectError();
-
-    err.reject(res);
-
-    expect(res.status).toHaveBeenCalledTimes(1);
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledTimes(1);
-    expect(res.json).toHaveBeenCalledWith(err.rejection);
-  });
 
   test('type guard returns true for reject errors', () => {
     expect(isRejectError(new DummyRejectError())).toBeTruthy();

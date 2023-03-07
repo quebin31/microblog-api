@@ -20,3 +20,11 @@ export function buildRes(partial?: object): Response {
 export function buildNext(): NextFunction {
   return jest.fn();
 }
+
+export function buildExpressParams() {
+  return {
+    req: buildReq(),
+    res: buildRes(),
+    next: buildNext(),
+  };
+}
