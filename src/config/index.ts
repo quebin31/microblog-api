@@ -32,7 +32,7 @@ export interface Config {
 
 export type OverridableConfig = Omit<Partial<Config>, 'nodeEnv'>
 
-const nodeEnv = process.env.NODE_ENV || 'development';
+const nodeEnv = process.env.NODE_ENV ?? 'development';
 if (!isValidNodeEnv(nodeEnv)) {
   throw new Error(`Received invalid value for environment variable NODE_ENV=${nodeEnv}`);
 }

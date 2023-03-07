@@ -60,9 +60,9 @@ export const postsService = {
     const options: GetAllOptions = {
       filterDraft,
       cursor: params.cursor,
-      sort: params.sort || 'desc',
+      sort: params.sort ?? 'desc',
       skip: params.cursor !== undefined ? 1 : 0,
-      take: params.take || 30,
+      take: params.take ?? 30,
       user: params.user === 'self' ? userId : params.user,
     };
 
@@ -70,7 +70,7 @@ export const postsService = {
     const last = posts.at(posts.length - 1);
 
     const mappedPosts = posts.map((post) => mapToPostResponse(post, userId));
-    return { posts: mappedPosts, cursor: last?.createdAt || null };
+    return { posts: mappedPosts, cursor: last?.createdAt ?? null };
   },
 
   async newPost(data: NewPostData, userId: string): Promise<PostResponse> {

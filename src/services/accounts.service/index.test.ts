@@ -217,7 +217,7 @@ describe('Update account', () => {
         .resolves
         .toEqual({
           email: user.email,
-          name: castedData?.name || user.name,
+          name: castedData?.name ?? user.name,
           role: user.role,
         });
     });
