@@ -93,4 +93,9 @@ export const accountsService = {
       };
     }
   },
+
+  async isModeratorOrAdmin(id: string) {
+    const user = await accountsDb.findById(id);
+    return user?.role === 'moderator' || user?.role === 'admin';
+  },
 };

@@ -222,3 +222,26 @@ describe('Update account', () => {
         });
     });
 });
+
+describe('Check if user is moderator or admin', () => {
+  test('non existent user returns false', async () => {
+    accountsDbMock.findById.mockResolvedValue(null);
+
+    await expect(accountsService.isModeratorOrAdmin(randomUUID())).resolves.toEqual(false);
+  });
+
+  test(`user with "user" role returns false`, async () => {
+    const user = createUser({ role: Role.user });
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    await expect(accountsService.isModeratorOrAdmin(user.id)).resolves.toEqual(false);
+  });
+
+  const roleCases: Role[][] = [[Role.moderator], [Role.admin]];
+  test.each(roleCases)('user with %p role returns true', async (role: Role) => {
+    const user = createUser({ role });
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    await expect(accountsService.isModeratorOrAdmin(user.id)).resolves.toEqual(true);
+  });
+});
