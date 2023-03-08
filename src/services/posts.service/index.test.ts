@@ -94,7 +94,7 @@ describe('Get all posts', () => {
     expect(options.value).toMatchObject({ user: user.id });
   });
 
-  test('author name is hidden based whether or not user name is public', async () => {
+  test('author name is hidden based on whether or not user name is public', async () => {
     const user1 = createUser({ publicName: false });
     const user2 = createUser({ publicName: true });
     const posts = [createFullPost({ user: user1 }), createFullPost({ user: user2 })];
