@@ -1,11 +1,13 @@
 import { createUser } from '../../test/factories/accounts';
-import { createFullComment } from '../../test/factories/comments';
+import { createFullComment, createNewCommentData } from '../../test/factories/comments';
 import { CommentResponse, commentsService, mapToCommentResponse } from './index';
-import { BadRequestError } from '../../errors';
+import { BadRequestError, NotFoundError } from '../../errors';
 import { commentsDb, GetAllOptions } from './database';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams } from '../../schemas/comments';
 import { randomUUID } from 'crypto';
+import { describe } from 'node:test';
+import { createFullPost } from '../../test/factories/posts';
 
 jest.mock('./database');
 
@@ -223,5 +225,30 @@ describe('Get all comments', () => {
     const options = captor<GetAllOptions>();
     expect(commentsDbMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value).toMatchObject(params);
+  });
+});
+
+describe('Create new comment', () => {
+  test('fails if database creation fails (invalid user or post)', async () => {
+    const data = createNewCommentData();
+    const user = createUser();
+
+    commentsDbMock.createNewComment.mockRejectedValue(new Error());
+
+    await expect(commentsService.newComment(data, user.id)).rejects
+      .toEqual(new NotFoundError('Invalid user or post'));
+  });
+
+  test('returns newly created comment on success', async () => {
+    const user = createUser({ publicName: false });
+    const post = createFullPost({ user });
+    const data = createNewCommentData({ postId: post.id });
+    const comment = createFullComment({ user, post });
+
+    commentsDbMock.createNewComment.mockResolvedValue(comment);
+
+    const expected = mapToCommentResponse(comment, user.id);
+    await expect(commentsService.newComment(data, user.id)).resolves.toEqual(expected);
+    expect(expected.authorName).toEqual(user.name);
   });
 });

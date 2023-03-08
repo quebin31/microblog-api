@@ -4,6 +4,7 @@ import { faker } from '@faker-js/faker';
 import { createUser } from './accounts';
 import { createPost } from './posts';
 import { FullComment } from '../../services/comments.service';
+import { NewCommentData } from '../../schemas/comments';
 
 export function createComment(overrides?: Partial<Comment>): Comment {
   return {
@@ -29,5 +30,14 @@ export function createFullComment(overrides?: Partial<FullComment>): FullComment
     user,
     post,
     ...createComment({ userId: user.id, postId: post.id, ...rest }),
+  };
+}
+
+export function createNewCommentData(overrides?: Partial<NewCommentData>): NewCommentData {
+  return {
+    postId: randomUUID(),
+    body: faker.lorem.sentence(6),
+    draft: false,
+    ...overrides,
   };
 }

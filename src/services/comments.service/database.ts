@@ -1,4 +1,5 @@
 import { prisma } from '../../prisma';
+import { NewCommentData } from '../../schemas/comments';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -28,6 +29,18 @@ export const commentsDb = {
       cursor,
       skip: options.skip,
       take: options.take,
+      include: { user: true, post: true },
+    });
+  },
+
+  async createNewComment(data: NewCommentData, userId: string) {
+    const { postId, ...rest } = data;
+    return prisma.comment.create({
+      data: {
+        ...rest,
+        user: { connect: { id: userId } },
+        post: { connect: { id: postId } },
+      },
       include: { user: true, post: true },
     });
   },

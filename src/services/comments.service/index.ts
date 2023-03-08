@@ -1,8 +1,8 @@
 import { Comment, Post, User } from '@prisma/client';
 import { omit } from '../../utils/types';
-import { GetAllParams } from '../../schemas/comments';
+import { GetAllParams, NewCommentData } from '../../schemas/comments';
 import { commentsDb, GetAllOptions } from './database';
-import { BadRequestError } from '../../errors';
+import { BadRequestError, NotFoundError } from '../../errors';
 
 export type CommentResponse = {
   id: string,
@@ -78,5 +78,14 @@ export const commentsService = {
 
     const mappedComments = comments.map((it) => mapToCommentResponse(it, userId));
     return { comments: mappedComments, cursor: last?.createdAt ?? null };
+  },
+
+  async newComment(data: NewCommentData, userId: string) {
+    const comment = await commentsDb.createNewComment(data, userId)
+      .catch((_) => {
+        throw new NotFoundError('Invalid user or post');
+      });
+
+    return mapToCommentResponse(comment, userId);
   },
 };

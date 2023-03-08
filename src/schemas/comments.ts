@@ -11,4 +11,11 @@ export const getAllSchema = z
   })
   .partial();
 
+export const newCommentSchema = z.object({
+  postId: z.string().uuid(),
+  body: z.string().min(1).max(512),
+  draft: z.boolean().default(false),
+});
+
 export type GetAllParams = z.infer<typeof getAllSchema>;
+export type NewCommentData = z.infer<typeof newCommentSchema>;
