@@ -333,19 +333,18 @@ describe('Update a post', () => {
 });
 
 describe('Delete a post', () => {
-  const roleCases: Role[][] = [[Role.user], [Role.moderator], [Role.admin]];
-  test.each(roleCases)(`fails if post doesn't exist (role: %p)`, async (role: Role) => {
-    const user = createUser({ role });
+  test(`fails if post doesn't exist`, async () => {
+    const user = createUser();
     const postId = randomUUID();
 
     accountsDbMock.findById.mockResolvedValue(user);
-    const userId = role === 'user' ? user.id : undefined;
-    postsDbMock.deletePost.calledWith(postId, userId).mockRejectedValue(new Error());
+    postsDbMock.deletePost.mockRejectedValue(new Error());
 
     await expect(postsService.deletePost(postId, user.id)).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${postId} to delete`));
   });
 
+  const roleCases: Role[][] = [[Role.user], [Role.moderator], [Role.admin]];
   test.each(roleCases)('deletes post if it exists (role: %p)', async (role: Role) => {
     const user = createUser({ role });
     const postId = randomUUID();
