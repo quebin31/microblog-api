@@ -44,4 +44,11 @@ export const commentsDb = {
       include: { user: true, post: true },
     });
   },
+
+  async findById(id: string) {
+    return prisma.comment.findUnique({
+      where: { id },
+      include: { user: true, post: true },
+    });
+  },
 };

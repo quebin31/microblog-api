@@ -14,7 +14,7 @@ router.get('/', ...getAllMiddlewares, asyncHandler(controller.getAllComments));
 const newCommentMiddlewares = [authMiddleware, validateBody(newCommentSchema)];
 router.post('/', ...newCommentMiddlewares, asyncHandler(controller.newComment));
 
-router.get('/:id');
+router.get('/:id', optional(authMiddleware), asyncHandler(controller.getComment));
 router.patch('/:id');
 router.delete('/:id');
 

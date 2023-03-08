@@ -88,4 +88,13 @@ export const commentsService = {
 
     return mapToCommentResponse(comment, userId);
   },
+
+  async getComment(id: string, userId?: string) {
+    const comment = await commentsDb.findById(id);
+    if (!comment || (comment.draft && comment.userId !== userId)) {
+      throw new NotFoundError(`Couldn't find comment with id ${id}`);
+    }
+
+    return mapToCommentResponse(comment, userId);
+  },
 };

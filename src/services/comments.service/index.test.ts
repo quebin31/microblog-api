@@ -6,7 +6,6 @@ import { commentsDb, GetAllOptions } from './database';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams } from '../../schemas/comments';
 import { randomUUID } from 'crypto';
-import { describe } from 'node:test';
 import { createFullPost } from '../../test/factories/posts';
 
 jest.mock('./database');
@@ -251,4 +250,57 @@ describe('Create new comment', () => {
     await expect(commentsService.newComment(data, user.id)).resolves.toEqual(expected);
     expect(expected.authorName).toEqual(user.name);
   });
+});
+
+describe('Get a single comment', () => {
+  test(`fails if comment with the provided id doesn't exist`, async () => {
+    const commentId = randomUUID();
+    commentsDbMock.findById.mockResolvedValue(null);
+
+    await expect(commentsService.getComment(commentId)).rejects
+      .toEqual(new NotFoundError(`Couldn't find comment with id ${commentId}`));
+  });
+
+  test(`fails if comment is a draft and caller wasn't defined`, async () => {
+    const comment = createFullComment({ draft: true });
+    commentsDbMock.findById.mockResolvedValue(comment);
+
+    await expect(commentsService.getComment(comment.id)).rejects
+      .toEqual(new NotFoundError(`Couldn't find comment with id ${comment.id}`));
+  });
+
+  test(`fails if comment is a draft and user id doesn't match`, async () => {
+    const comment = createFullComment({ draft: true });
+    commentsDbMock.findById.mockResolvedValue(comment);
+
+    await expect(commentsService.getComment(comment.id, randomUUID())).rejects
+      .toEqual(new NotFoundError(`Couldn't find comment with id ${comment.id}`));
+  });
+
+  test(`returns draft if provided user id matches`, async () => {
+    const comment = createFullComment({ draft: true });
+    commentsDbMock.findById.mockResolvedValue(comment);
+
+    const expected = mapToCommentResponse(comment, comment.userId);
+    await expect(commentsService.getComment(comment.id, comment.userId)).resolves.toEqual(expected);
+  });
+
+  const withUserCases = [[false], [true]];
+  test.each(withUserCases)(
+    'returns published comment (with user defined: %p)',
+    async (withUser) => {
+      const user = createUser({ publicName: false });
+      const comment = createFullComment({ user });
+      commentsDbMock.findById.mockResolvedValue(comment);
+
+      const userId = withUser ? comment.userId : undefined;
+      const expected = mapToCommentResponse(comment, userId);
+      await expect(commentsService.getComment(comment.id, userId)).resolves.toEqual(expected);
+      if (withUser) {
+        expect(expected.authorName).toEqual(user.name);
+      } else {
+        expect(expected.authorName).toBeNull();
+      }
+    },
+  );
 });
