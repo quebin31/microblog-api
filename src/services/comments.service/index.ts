@@ -3,6 +3,7 @@ import { omit } from '../../utils/types';
 import { GetAllParams, NewCommentData, PatchCommentData } from '../../schemas/comments';
 import { commentsDb, GetAllOptions } from './database';
 import { BadRequestError, NotFoundError } from '../../errors';
+import { accountsService } from '../accounts.service';
 
 export type CommentResponse = {
   id: string,
@@ -106,8 +107,16 @@ export const commentsService = {
     const updated = await commentsDb.updateComment(id, data, userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find comment with id ${id} to update`);
-      })
+      });
 
     return mapToCommentResponse(updated, userId);
+  },
+
+  async deleteComment(id: string, userId: string) {
+    const privileged = await accountsService.isModeratorOrAdmin(userId);
+    await commentsDb.deleteComment(id, privileged ? undefined : userId)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find comment with id ${id} to delete`);
+      });
   },
 };

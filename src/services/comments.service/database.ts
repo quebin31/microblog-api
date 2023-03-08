@@ -73,4 +73,16 @@ export const commentsDb = {
 
     return { ...comments.at(0)!!, user };
   },
+
+  async deleteComment(id: string, userId?: string) {
+    await prisma.$transaction(async (tx) => {
+      const result = await tx.comment.deleteMany({
+        where: { id, userId },
+      });
+
+      if (result.count !== 1) {
+        throw new Error();
+      }
+    });
+  },
 };

@@ -19,6 +19,6 @@ router.get('/:id', optional(authMiddleware), asyncHandler(controller.getComment)
 const patchCommentMiddlewares = [authMiddleware, validateBody(patchCommentSchema)];
 router.patch('/:id', ...patchCommentMiddlewares, asyncHandler(controller.patchComment));
 
-router.delete('/:id');
+router.delete('/:id', authMiddleware, asyncHandler(controller.deleteComment));
 
 export default router;

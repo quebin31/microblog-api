@@ -6,18 +6,24 @@ import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams, PatchCommentData } from '../../schemas/comments';
 import { randomUUID } from 'crypto';
 import { createFullPost } from '../../test/factories/posts';
+import { Role } from '@prisma/client';
+import { accountsDb } from '../accounts.service/database';
 import {
   createComment,
   createFullComment,
   createNewCommentData,
 } from '../../test/factories/comments';
 
+
 jest.mock('./database');
+jest.mock('../accounts.service/database');
 
 const commentsDbMock = commentsDb as MockProxy<typeof commentsDb>;
+const accountsDbMock = accountsDb as MockProxy<typeof accountsDb>;
 
 beforeEach(() => {
   mockReset(commentsDbMock);
+  mockReset(accountsDbMock);
 });
 
 describe('Map comment to response', () => {
@@ -339,5 +345,33 @@ describe('Update a comment', () => {
       .toEqual(expected);
 
     expect(expected.authorName).toEqual(user.name);
+  });
+});
+
+describe('Delete a comment', () => {
+  test(`fails if comment doesn't exist`, async () => {
+    const user = createUser();
+    const commentId = randomUUID();
+
+    accountsDbMock.findById.mockResolvedValue(user);
+    commentsDbMock.deleteComment.mockRejectedValue(new Error());
+
+    await expect(commentsService.deleteComment(commentId, user.id)).rejects
+      .toEqual(new NotFoundError(`Couldn't find comment with id ${commentId} to delete`));
+  });
+
+  const roleCases: Role[][] = [[Role.user], [Role.moderator], [Role.admin]];
+  test.each(roleCases)(`deletes post if it exists (role: %p)`, async (role: Role) => {
+    const user = createUser({ role });
+    const commentId = randomUUID();
+
+    accountsDbMock.findById.mockResolvedValue(user);
+    commentsDbMock.deleteComment.mockResolvedValue();
+
+    await commentsService.deleteComment(commentId, user.id);
+
+    const userId = role === 'user' ? user.id : undefined;
+    expect(commentsDbMock.deleteComment).toHaveBeenCalledTimes(1);
+    expect(commentsDbMock.deleteComment).toHaveBeenCalledWith(commentId, userId);
   });
 });

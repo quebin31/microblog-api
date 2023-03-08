@@ -26,3 +26,10 @@ export async function patchComment(req: Request, res: Response) {
   const updated = await commentsService.updateComment(commentId, req.body, userId);
   res.status(200).json(updated);
 }
+
+export async function deleteComment(req: Request, res: Response) {
+  const commentId = req.params.id;
+  const userId = req.subject!!;
+  await commentsService.deleteComment(commentId, userId);
+  res.status(204).send();
+}
