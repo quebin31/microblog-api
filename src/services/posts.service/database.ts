@@ -41,7 +41,7 @@ export const postsDb = {
     });
   },
 
-  async findPostById(id: string) {
+  async findById(id: string) {
     return prisma.post.findUnique({
       where: { id },
       include: { user: true },

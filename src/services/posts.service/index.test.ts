@@ -250,7 +250,7 @@ describe('Create new post', () => {
 describe('Get a single post', () => {
   test(`fails if post with the provided id doesn't exist`, async () => {
     const postId = randomUUID();
-    postsDbMock.findPostById.mockResolvedValue(null);
+    postsDbMock.findById.mockResolvedValue(null);
 
     await expect(postsService.getPost(postId)).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${postId}`));
@@ -259,7 +259,7 @@ describe('Get a single post', () => {
   test(`fails if post is a draft and user wasn't defined`, async () => {
     const user = createUser();
     const post = createFullPost({ user, draft: true });
-    postsDbMock.findPostById.mockResolvedValue(post);
+    postsDbMock.findById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id)).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${post.id}`));
@@ -268,7 +268,7 @@ describe('Get a single post', () => {
   test(`fails if post is a draft and user id doesn't match`, async () => {
     const user = createUser();
     const post = createFullPost({ user, draft: true });
-    postsDbMock.findPostById.mockResolvedValue(post);
+    postsDbMock.findById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id, randomUUID())).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${post.id}`));
@@ -277,7 +277,7 @@ describe('Get a single post', () => {
   test('returns draft if provided user id matches', async () => {
     const user = createUser();
     const post = createFullPost({ user, draft: true });
-    postsDbMock.findPostById.mockResolvedValue(post);
+    postsDbMock.findById.mockResolvedValue(post);
 
     const expected = mapToPostResponse(post, post.userId);
     await expect(postsService.getPost(post.id, post.userId)).resolves.toEqual(expected);
@@ -289,7 +289,7 @@ describe('Get a single post', () => {
     async (withUser) => {
       const user = createUser({ publicName: false });
       const post = createFullPost({ user });
-      postsDbMock.findPostById.mockResolvedValue(post);
+      postsDbMock.findById.mockResolvedValue(post);
 
       const userId = withUser ? post.userId : undefined;
       const expected = mapToPostResponse(post, userId);

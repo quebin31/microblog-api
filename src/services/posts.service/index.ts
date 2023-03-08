@@ -83,7 +83,7 @@ export const postsService = {
   },
 
   async getPost(id: string, userId?: string) {
-    const post = await postsDb.findPostById(id);
+    const post = await postsDb.findById(id);
     if (!post || (post.draft && post.userId !== userId)) {
       throw new NotFoundError(`Couldn't find post with id ${id}`);
     }
