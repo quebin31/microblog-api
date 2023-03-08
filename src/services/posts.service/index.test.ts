@@ -257,8 +257,7 @@ describe('Get a single post', () => {
   });
 
   test(`fails if post is a draft and user wasn't defined`, async () => {
-    const user = createUser();
-    const post = createFullPost({ user, draft: true });
+    const post = createFullPost({ draft: true });
     postsDbMock.findById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id)).rejects
@@ -266,8 +265,7 @@ describe('Get a single post', () => {
   });
 
   test(`fails if post is a draft and user id doesn't match`, async () => {
-    const user = createUser();
-    const post = createFullPost({ user, draft: true });
+    const post = createFullPost({ draft: true });
     postsDbMock.findById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id, randomUUID())).rejects
@@ -275,8 +273,7 @@ describe('Get a single post', () => {
   });
 
   test('returns draft if provided user id matches', async () => {
-    const user = createUser();
-    const post = createFullPost({ user, draft: true });
+    const post = createFullPost({ draft: true });
     postsDbMock.findById.mockResolvedValue(post);
 
     const expected = mapToPostResponse(post, post.userId);
