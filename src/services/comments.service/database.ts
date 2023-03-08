@@ -1,5 +1,5 @@
 import { prisma } from '../../prisma';
-import { NewCommentData } from '../../schemas/comments';
+import { NewCommentData, PatchCommentData } from '../../schemas/comments';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -50,5 +50,27 @@ export const commentsDb = {
       where: { id },
       include: { user: true, post: true },
     });
+  },
+
+  async updateComment(id: string, data: PatchCommentData, userId: string) {
+    const { comments, ...user } = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        comments: {
+          update: {
+            where: { id },
+            data: data,
+          },
+        },
+      },
+      include: {
+        comments: {
+          where: { id },
+          include: { post: true },
+        },
+      },
+    });
+
+    return { ...comments.at(0)!!, user };
   },
 };

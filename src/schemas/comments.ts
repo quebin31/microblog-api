@@ -17,5 +17,13 @@ export const newCommentSchema = z.object({
   draft: z.boolean().default(false),
 });
 
+export const patchCommentSchema = newCommentSchema
+  .pick({ body: true })
+  .extend({
+    draft: z.boolean(),
+  })
+  .partial();
+
 export type GetAllParams = z.infer<typeof getAllSchema>;
 export type NewCommentData = z.infer<typeof newCommentSchema>;
+export type PatchCommentData = z.infer<typeof patchCommentSchema>;

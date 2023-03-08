@@ -2,7 +2,7 @@ import { Router } from 'express';
 import { optional } from '../middlewares/util';
 import { authMiddleware } from '../middlewares/auth';
 import { validateBody, validateQuery } from '../middlewares/schemas';
-import { getAllSchema, newCommentSchema } from '../schemas/comments';
+import { getAllSchema, newCommentSchema, patchCommentSchema } from '../schemas/comments';
 import asyncHandler from 'express-async-handler';
 import * as controller from '../controllers/comments.controller';
 
@@ -15,7 +15,10 @@ const newCommentMiddlewares = [authMiddleware, validateBody(newCommentSchema)];
 router.post('/', ...newCommentMiddlewares, asyncHandler(controller.newComment));
 
 router.get('/:id', optional(authMiddleware), asyncHandler(controller.getComment));
-router.patch('/:id');
+
+const patchCommentMiddlewares = [authMiddleware, validateBody(patchCommentSchema)];
+router.patch('/:id', ...patchCommentMiddlewares, asyncHandler(controller.patchComment));
+
 router.delete('/:id');
 
 export default router;

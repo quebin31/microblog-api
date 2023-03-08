@@ -19,3 +19,10 @@ export async function getComment(req: Request, res: Response) {
   const response = await commentsService.getComment(commentId, userId);
   res.status(200).json(response);
 }
+
+export async function patchComment(req: Request, res: Response) {
+  const commentId = req.params.id;
+  const userId = req.subject!!;
+  const updated = await commentsService.updateComment(commentId, req.body, userId);
+  res.status(200).json(updated);
+}

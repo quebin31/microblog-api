@@ -1,6 +1,6 @@
 import { Comment, Post, User } from '@prisma/client';
 import { omit } from '../../utils/types';
-import { GetAllParams, NewCommentData } from '../../schemas/comments';
+import { GetAllParams, NewCommentData, PatchCommentData } from '../../schemas/comments';
 import { commentsDb, GetAllOptions } from './database';
 import { BadRequestError, NotFoundError } from '../../errors';
 
@@ -96,5 +96,18 @@ export const commentsService = {
     }
 
     return mapToCommentResponse(comment, userId);
+  },
+
+  async updateComment(id: string, data: PatchCommentData, userId: string) {
+    if (data.draft === true) {
+      throw new BadRequestError(`Comments cannot be turned into drafts`);
+    }
+
+    const updated = await commentsDb.updateComment(id, data, userId)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find comment with id ${id} to update`);
+      })
+
+    return mapToCommentResponse(updated, userId);
   },
 };

@@ -1,12 +1,16 @@
 import { createUser } from '../../test/factories/accounts';
-import { createFullComment, createNewCommentData } from '../../test/factories/comments';
 import { CommentResponse, commentsService, mapToCommentResponse } from './index';
 import { BadRequestError, NotFoundError } from '../../errors';
 import { commentsDb, GetAllOptions } from './database';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
-import { GetAllParams } from '../../schemas/comments';
+import { GetAllParams, PatchCommentData } from '../../schemas/comments';
 import { randomUUID } from 'crypto';
 import { createFullPost } from '../../test/factories/posts';
+import {
+  createComment,
+  createFullComment,
+  createNewCommentData,
+} from '../../test/factories/comments';
 
 jest.mock('./database');
 
@@ -303,4 +307,37 @@ describe('Get a single comment', () => {
       }
     },
   );
+});
+
+describe('Update a comment', () => {
+  test('fails if draft = true (comments cannot be turned into drafts)', async () => {
+    const comment = createComment();
+    const data: PatchCommentData = { draft: true };
+
+    await expect(commentsService.updateComment(comment.id, data, comment.userId)).rejects
+      .toEqual(new BadRequestError('Comments cannot be turned into drafts'));
+  });
+
+  test('fails with not found if database update fails', async () => {
+    const comment = createComment();
+    commentsDbMock.updateComment.mockRejectedValue(new Error());
+
+    await expect(commentsService.updateComment(comment.id, {}, comment.userId)).rejects
+      .toEqual(new BadRequestError(`Couldn't find comment with id ${comment.id} to update`));
+  });
+
+  test('returns updated comment on success', async () => {
+    const user = createUser({ publicName: false });
+    const comment = createFullComment({ user, draft: true, body: 'old body' });
+    const data: PatchCommentData = { draft: false, body: 'new body' };
+    const updated = { ...comment, ...data };
+    const expected = mapToCommentResponse(updated, user.id);
+
+    commentsDbMock.updateComment.mockResolvedValue(updated);
+
+    await expect(commentsService.updateComment(comment.id, data, user.id)).resolves
+      .toEqual(expected);
+
+    expect(expected.authorName).toEqual(user.name);
+  });
 });
