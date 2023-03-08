@@ -207,7 +207,12 @@ describe('Get all posts', () => {
 
   test('other params are passed as options to database query', async () => {
     const userId = randomUUID();
-    const params: GetAllParams = { user: userId, cursor: new Date() };
+    const params: GetAllParams = {
+      user: userId,
+      sort: 'asc',
+      take: 10,
+      cursor: new Date(),
+    };
 
     postsDbMock.getAll.mockResolvedValue([]);
 
