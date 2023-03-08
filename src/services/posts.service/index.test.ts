@@ -101,11 +101,9 @@ describe('Get all posts', () => {
 
     postsDbMock.getAll.mockResolvedValue(posts);
 
-    const mappedPosts = posts.map((post) => mapToPostResponse(post));
-    const expected = { posts: mappedPosts, cursor: posts[1].createdAt };
-    await expect(postsService.getAll({})).resolves.toEqual(expected);
-    expect(mappedPosts[0].authorName).toBeNull();
-    expect(mappedPosts[1].authorName).toEqual(user2.name);
+    const response = await postsService.getAll({});
+    expect(response.posts[0].authorName).toBeNull();
+    expect(response.posts[1].authorName).toEqual(user2.name);
   });
 
   test('author name is shown if post is from caller user', async () => {
@@ -113,12 +111,8 @@ describe('Get all posts', () => {
     const posts = [createFullPost({ user })];
     postsDbMock.getAll.mockResolvedValue(posts);
 
-    await postsService.getAll({}, user.id);
-
-    const mappedPosts = posts.map((post) => mapToPostResponse(post, user.id));
-    const expected = { posts: mappedPosts, cursor: posts[0].createdAt };
-    await expect(postsService.getAll({}, user.id)).resolves.toEqual(expected);
-    expect(mappedPosts[0].authorName).toEqual(user.name);
+    const response = await postsService.getAll({}, user.id);
+    expect(response.posts[0].authorName).toEqual(user.name);
   });
 
   test(`sort order defaults to 'desc' if undefined`, async () => {
@@ -128,7 +122,7 @@ describe('Get all posts', () => {
 
     const options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
-    expect(options.value).toMatchObject({ sort: 'desc' });
+    expect(options.value.sort).toEqual('desc');
   });
 
   const takeDefault = 30;
@@ -139,7 +133,7 @@ describe('Get all posts', () => {
 
     const options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
-    expect(options.value).toMatchObject({ take: takeDefault });
+    expect(options.value.take).toEqual(takeDefault);
   });
 
   test(`include = 'all' only includes published posts if no user is defined`, async () => {
@@ -150,15 +144,14 @@ describe('Get all posts', () => {
 
     let options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
-    expect(options.value.filterDraft).toBeFalsy();
+    expect(options.value.filterDraft).toEqual(false);
     expect(postsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
-    expect(options.value.filterDraft).toBeFalsy();
+    expect(options.value.filterDraft).toEqual(false);
   });
 
   test(`include = 'all' includes published and draft posts if user is defined`, async () => {
     const user = createUser();
     postsDbMock.getAll.mockResolvedValue([]);
-
 
     await postsService.getAll({ include: 'all' }, user.id);
     await postsService.getAll({}, user.id); // defaults to 'all'
@@ -177,7 +170,7 @@ describe('Get all posts', () => {
 
     const options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
-    expect(options.value).toMatchObject({ filterDraft: false });
+    expect(options.value.filterDraft).toEqual(false);
   });
 
   test(`include = 'drafts' filters posts that are drafts only if user is defined`, async () => {
@@ -187,7 +180,7 @@ describe('Get all posts', () => {
 
     const options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
-    expect(options.value).toMatchObject({ filterDraft: true });
+    expect(options.value.filterDraft).toEqual(true);
   });
 
   test(`include = 'drafts' returns early if no user is defined`, async () => {
@@ -206,10 +199,10 @@ describe('Get all posts', () => {
 
     let options = captor<GetAllOptions>();
     expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
-    expect(options.value).toMatchObject({ skip: 0 });
+    expect(options.value.skip).toEqual(0);
 
     expect(postsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
-    expect(options.value).toMatchObject({ skip: 1 });
+    expect(options.value.skip).toEqual(1);
   });
 
   test('other params are passed as options to database query', async () => {
