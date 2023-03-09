@@ -1,7 +1,9 @@
 import { NextFunction, Request, Response } from 'express';
-import { UnauthorizedError } from '../errors';
+import { ForbiddenError, UnauthorizedError } from '../errors';
 import { verifyJwt } from '../utils/auth';
 import config from '../config';
+import asyncHandler from 'express-async-handler';
+import { verificationService } from '../services/verification.service';
 
 export function authMiddleware(req: Request, res: Response, next: NextFunction) {
   const [_, accessToken] = req.headers.authorization?.split(' ') ?? [];
@@ -19,3 +21,15 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
     throw new UnauthorizedError(message);
   }
 }
+
+async function verifiedMiddlewareAsync(req: Request, res: Response, next: NextFunction) {
+  const userId = req.subject!;
+  const verified = await verificationService.isVerified(userId);
+  if (verified) {
+    next();
+  } else {
+    throw new ForbiddenError('Your account must be verified to use this endpoint');
+  }
+}
+
+export const verifiedMiddleware = asyncHandler(verifiedMiddlewareAsync);
