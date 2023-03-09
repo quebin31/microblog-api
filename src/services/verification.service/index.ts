@@ -27,11 +27,11 @@ export const verificationService = {
   async isVerified(id: string): Promise<boolean> {
     const isVerified = await verificationCache.isVerified.get(id);
     if (isVerified !== null) {
-      return isVerified === 'true';
+      return isVerified;
     }
 
     const user = await accountsDb.findById(id);
-    if (user === null) {
+    if (!user) {
       throw new NotFoundError(`Couldn't find user to check verification`);
     }
 
@@ -59,7 +59,7 @@ export const verificationService = {
     }
 
     const requestedAt = await verificationCache.requestedAt.get(id);
-    if (requestedAt !== null && parseInt(requestedAt) + 60 * 1000 > Date.now()) {
+    if (requestedAt !== null && requestedAt + 60 * 1000 > Date.now()) {
       throw new TooManyRequestsError('Email verifications can only be sent every 60 seconds');
     }
 

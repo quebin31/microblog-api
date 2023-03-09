@@ -21,6 +21,34 @@ beforeEach(() => {
   mockReset(verificationCacheMock);
 });
 
+describe('Check if user is verified', () => {
+  const verifiedValues = [[false], [true]];
+
+  test.each(verifiedValues)('returns value %p from cache (if available)', async (cached) => {
+    verificationCacheMock.isVerified.get.mockResolvedValue(cached);
+
+    await expect(verificationService.isVerified(randomUUID())).resolves.toEqual(cached);
+  });
+
+  test(`fails if there isn't cache and user doesn't exist`, async () => {
+    verificationCacheMock.isVerified.get.mockResolvedValue(null);
+    accountsDbMock.findById.mockResolvedValue(null);
+
+    await expect(verificationService.isVerified(randomUUID())).rejects
+      .toEqual(new NotFoundError(`Couldn't find user to check verification`));
+  });
+
+  test.each(verifiedValues)(`returns user verified value %p and caches value`, async (verified) => {
+    const user = createUser({ verified });
+    verificationCacheMock.isVerified.get.mockResolvedValue(null);
+    accountsDbMock.findById.mockResolvedValue(user);
+
+    await expect(verificationService.isVerified(user.id)).resolves.toEqual(verified);
+
+    expect(verificationCacheMock.isVerified.set).toHaveBeenCalledWith(user.id, verified);
+  });
+});
+
 describe('Send email verification', function() {
   test('fails if no user exists with given id', async () => {
     accountsDbMock.findById.mockResolvedValue(null);
@@ -37,7 +65,7 @@ describe('Send email verification', function() {
       const user = createUser({ verified: true });
 
       accountsDbMock.findById.mockResolvedValue(user);
-      verificationCacheMock.isVerified.get.mockResolvedValue(withCache ? 'true' : null);
+      verificationCacheMock.isVerified.get.mockResolvedValue(withCache ? true : null);
 
       await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects
         .toEqual(new BadRequestError('User has already been verified'));
@@ -47,7 +75,7 @@ describe('Send email verification', function() {
     const user = createUser();
 
     accountsDbMock.findById.mockResolvedValue(user);
-    verificationCacheMock.requestedAt.get.mockResolvedValue(Date.now().toString());
+    verificationCacheMock.requestedAt.get.mockResolvedValue(Date.now());
     verificationCacheMock.isVerified.get.mockResolvedValue(null);
 
     await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects
@@ -73,22 +101,22 @@ describe('Send email verification', function() {
       expect(requestedAtCaptor.value).toBeLessThanOrEqual(Date.now());
       expect(requestedAtCaptor.value).toBeGreaterThanOrEqual(before);
 
-      const verificationCodeCaptor = captor<string>()
+      const verificationCodeCaptor = captor<string>();
       expect(verificationCacheMock.code.set).toHaveBeenCalledWith(user.id, verificationCodeCaptor);
       const regex = new RegExp(`^[${nolookalikes}]{6}$`);
-      const verificationCode = verificationCodeCaptor.value
+      const verificationCode = verificationCodeCaptor.value;
       expect(regex.test(verificationCodeCaptor.value)).toBeTruthy();
 
       expect(sendGridMailMock.send).toHaveBeenCalledTimes(1);
-      const emailDataCaptor = captor<MailDataRequired>()
-      expect(sendGridMailMock.send).toHaveBeenCalledWith(emailDataCaptor)
+      const emailDataCaptor = captor<MailDataRequired>();
+      expect(sendGridMailMock.send).toHaveBeenCalledWith(emailDataCaptor);
       expect(emailDataCaptor.value).toMatchObject({
         from: 'kevindelcastillo@ravn.co',
         to: user.email,
         subject: 'Confirm your Microblog account',
       });
 
-      const emailData = emailDataCaptor.value
+      const emailData = emailDataCaptor.value;
       expect(emailData.text).toEqual(`Confirmation code: ${verificationCode}`);
       expect(emailData.html).toEqual(`Confirmation code: <strong>${verificationCode}</strong>`);
     });

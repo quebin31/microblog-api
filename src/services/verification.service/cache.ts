@@ -7,7 +7,10 @@ export const verificationCache = {
   expiration: 24 * 60 * 60 * 1000, // 24 hours
 
   isVerified: {
-    get: async (id: string) => redisClient.get(verificationCache.isVerifiedKey(id)),
+    get: async (id: string) => {
+      const value = await redisClient.get(verificationCache.isVerifiedKey(id));
+      return value === null ? null : value === 'true';
+    },
     set: async (id: string, verified: boolean) => {
       const key = verificationCache.isVerifiedKey(id);
       return redisClient.set(key, `${verified}`, { EX: verificationCache.expiration });
@@ -15,7 +18,10 @@ export const verificationCache = {
   },
 
   requestedAt: {
-    get: async (id: string) => redisClient.get(verificationCache.requestedAtKey(id)),
+    get: async (id: string) => {
+      const value = await redisClient.get(verificationCache.requestedAtKey(id));
+      return value === null ? null : parseInt(value);
+    },
     set: async (id: string, timestamp: number) => {
       const key = verificationCache.requestedAtKey(id);
       return redisClient.set(key, `${timestamp}`, { EX: verificationCache.expiration });
@@ -23,8 +29,8 @@ export const verificationCache = {
   },
 
   code: {
-    get: async (id: string) => redisClient.get(verificationCache.codeKey(id)),
     del: async (id: string) => redisClient.del(verificationCache.codeKey(id)),
+    get: async (id: string) => redisClient.get(verificationCache.codeKey(id)),
     set: async (id: string, code: string) => {
       const key = verificationCache.codeKey(id);
       return redisClient.set(key, code, { EX: verificationCache.expiration });
