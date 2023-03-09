@@ -1,5 +1,5 @@
-import { prisma } from '../../prisma';
-import { NewPostData, PatchPostData } from '../../schemas/posts';
+import { prisma } from '../prisma';
+import { NewPostData, PatchPostData } from '../schemas/posts';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -10,7 +10,7 @@ export type GetAllOptions = {
   filterDraft?: boolean,
 }
 
-export const postsDb = {
+export const postsDao = {
   async getAll(options: GetAllOptions) {
     const cursor = options.cursor !== undefined
       ? { createdAt: options.cursor }

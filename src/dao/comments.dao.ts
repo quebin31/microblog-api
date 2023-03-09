@@ -1,5 +1,5 @@
-import { prisma } from '../../prisma';
-import { NewCommentData, PatchCommentData } from '../../schemas/comments';
+import { prisma } from '../prisma';
+import { NewCommentData, PatchCommentData } from '../schemas/comments';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -11,7 +11,7 @@ export type GetAllOptions = {
   filterDraft?: boolean,
 }
 
-export const commentsDb = {
+export const commentsDao = {
   async getAll(options: GetAllOptions) {
     const cursor = options.cursor !== undefined
       ? { createdAt: options.cursor }

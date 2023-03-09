@@ -1,9 +1,9 @@
-import { GetAllOptions, postsDb } from './database';
-import { GetAllParams, NewPostData, PatchPostData } from '../../schemas/posts';
+import { GetAllOptions, postsDao } from '../dao/posts.dao';
+import { GetAllParams, NewPostData, PatchPostData } from '../schemas/posts';
 import { Post, User } from '@prisma/client';
-import { BadRequestError, NotFoundError } from '../../errors';
-import { accountsService } from '../accounts.service';
-import { omit } from '../../utils/types';
+import { BadRequestError, NotFoundError } from '../errors';
+import { accountsService } from './accounts.service';
+import { omit } from '../utils/types';
 
 export type PostResponse = {
   id: string,
@@ -66,7 +66,7 @@ export const postsService = {
       user: params.user === 'self' ? userId : params.user,
     };
 
-    const posts = await postsDb.getAll(options);
+    const posts = await postsDao.getAll(options);
     const last = posts.at(posts.length - 1);
 
     const mappedPosts = posts.map((post) => mapToPostResponse(post, userId));
@@ -74,7 +74,7 @@ export const postsService = {
   },
 
   async newPost(data: NewPostData, userId: string): Promise<PostResponse> {
-    const post = await postsDb.createNewPost(data, userId)
+    const post = await postsDao.createNewPost(data, userId)
       .catch((_) => {
         throw new NotFoundError('Invalid user');
       });
@@ -83,7 +83,7 @@ export const postsService = {
   },
 
   async getPost(id: string, userId?: string) {
-    const post = await postsDb.findById(id);
+    const post = await postsDao.findById(id);
     if (!post || (post.draft && post.userId !== userId)) {
       throw new NotFoundError(`Couldn't find post with id ${id}`);
     }
@@ -96,7 +96,7 @@ export const postsService = {
       throw new BadRequestError('Posts cannot be turned into drafts');
     }
 
-    const updated = await postsDb.updatePost(id, data, userId)
+    const updated = await postsDao.updatePost(id, data, userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find post with id ${id} to update`);
       });
@@ -106,7 +106,7 @@ export const postsService = {
 
   async deletePost(id: string, userId: string) {
     const privileged = await accountsService.isModeratorOrAdmin(userId);
-    await postsDb.deletePost(id, privileged ? undefined : userId)
+    await postsDao.deletePost(id, privileged ? undefined : userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find post with id ${id} to delete`);
       });

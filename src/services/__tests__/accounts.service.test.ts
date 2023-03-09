@@ -1,4 +1,4 @@
-import { accountsService } from './index';
+import { accountsService } from '../accounts.service';
 import { createSignInData, createSignUpData, createUser } from '../../test/factories/accounts';
 import jwt from 'jsonwebtoken';
 import { BadRequestError, ForbiddenError, NotFoundError } from '../../errors';
@@ -6,25 +6,25 @@ import { saltPassword } from '../../utils/auth';
 import { eventEmitter } from '../../events';
 import { UserEmailVerificationEvent } from '../../events/verification';
 import { VerificationInput } from '../verification.service';
-import { accountsDb } from './database';
+import { accountsDao } from '../../dao/accounts.dao';
 import { randomUUID } from 'crypto';
 import { PatchAccountData } from '../../schemas/accounts';
 import { Role } from '@prisma/client';
 import { MockProxy, mockReset } from 'jest-mock-extended';
 
 jest.mock('../../events');
-jest.mock('./database');
+jest.mock('../../dao/accounts.dao');
 
-const accountsDbMock = accountsDb as MockProxy<typeof accountsDb>;
+const accountsDaoMock = accountsDao as MockProxy<typeof accountsDao>;
 
 beforeEach(() => {
-  mockReset(accountsDbMock);
+  mockReset(accountsDaoMock);
 });
 
 describe('Create new account', () => {
   test('fails if email is already registered', async () => {
     const data = createSignUpData();
-    accountsDbMock.createNewUser.mockRejectedValueOnce(new Error());
+    accountsDaoMock.createNewUser.mockRejectedValueOnce(new Error());
 
     await expect(accountsService.signUp(data)).rejects
       .toEqual(new BadRequestError('Email already registered'));
@@ -43,7 +43,7 @@ describe('Create new account', () => {
   test('returns access token on success', async () => {
     const data = createSignUpData();
     const user = createUser(data);
-    accountsDbMock.createNewUser.mockResolvedValueOnce(user);
+    accountsDaoMock.createNewUser.mockResolvedValueOnce(user);
 
     const result = await accountsService.signUp(data);
 
@@ -55,7 +55,7 @@ describe('Create new account', () => {
   test('triggers email verification event on success', async () => {
     const data = createSignUpData();
     const user = createUser(data);
-    accountsDbMock.createNewUser.mockResolvedValueOnce(user);
+    accountsDaoMock.createNewUser.mockResolvedValueOnce(user);
 
     await accountsService.signUp(data);
 
@@ -68,7 +68,7 @@ describe('Create new account', () => {
 describe('Login flow', () => {
   test(`fails if no account exists with the given email`, async () => {
     const data = createSignInData();
-    accountsDbMock.findByEmail.mockResolvedValueOnce(null);
+    accountsDaoMock.findByEmail.mockResolvedValueOnce(null);
 
     await expect(accountsService.signIn(data)).rejects
       .toEqual(new NotFoundError('Invalid email or password'));
@@ -77,7 +77,7 @@ describe('Login flow', () => {
   test(`fails if passwords doesn't match`, async () => {
     const user = createUser({ password: await saltPassword('pass1234!') });
     const data = createSignInData({ password: '!1234pass' });
-    accountsDbMock.findByEmail.mockResolvedValueOnce(user);
+    accountsDaoMock.findByEmail.mockResolvedValueOnce(user);
 
     await expect(accountsService.signIn(data)).rejects
       .toEqual(new NotFoundError('Invalid email or password'));
@@ -86,7 +86,7 @@ describe('Login flow', () => {
   test('returns access token on success', async () => {
     const user = createUser({ password: await saltPassword('pass1234!') });
     const data = createSignInData({ password: 'pass1234!' });
-    accountsDbMock.findByEmail.mockResolvedValueOnce(user);
+    accountsDaoMock.findByEmail.mockResolvedValueOnce(user);
 
     const result = await accountsService.signIn(data);
 
@@ -98,7 +98,7 @@ describe('Login flow', () => {
 
 describe('Get account', () => {
   test(`fails if user doesn't exists`, async () => {
-    accountsDbMock.findById.mockResolvedValue(null);
+    accountsDaoMock.findById.mockResolvedValue(null);
 
     const uuid = randomUUID();
     await expect(accountsService.getAccount(uuid)).rejects
@@ -107,7 +107,7 @@ describe('Get account', () => {
 
   test(`fails if user isn't verified`, async () => {
     const user = createUser({ verified: false });
-    accountsDbMock.findById.mockResolvedValue(user);
+    accountsDaoMock.findById.mockResolvedValue(user);
 
     await expect(accountsService.getAccount(user.id)).rejects
       .toEqual(new NotFoundError(`Couldn't find user with id ${user.id}`));
@@ -115,7 +115,7 @@ describe('Get account', () => {
 
   test('returns account if user is found and it is verified', async () => {
     const user = createUser({ verified: true, publicEmail: true, publicName: true });
-    accountsDbMock.findById.mockResolvedValue(user);
+    accountsDaoMock.findById.mockResolvedValue(user);
 
     const expected = { email: user.email, name: user.name, role: user.role };
     await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
@@ -123,7 +123,7 @@ describe('Get account', () => {
 
   test(`returns account with email as null if it's not public`, async () => {
     const user = createUser({ verified: true, publicEmail: false, publicName: true });
-    accountsDbMock.findById.mockResolvedValue(user);
+    accountsDaoMock.findById.mockResolvedValue(user);
 
     const expected = { email: null, name: user.name, role: user.role };
     await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
@@ -131,7 +131,7 @@ describe('Get account', () => {
 
   test(`returns account with name as null if it's not public`, async () => {
     const user = createUser({ verified: true, publicEmail: true, publicName: false });
-    accountsDbMock.findById.mockResolvedValue(user);
+    accountsDaoMock.findById.mockResolvedValue(user);
 
     const expected = { email: user.email, name: null, role: user.role };
     await expect(accountsService.getAccount(user.id)).resolves.toEqual(expected);
@@ -142,7 +142,7 @@ describe('Get account', () => {
     'returns all account info if user is the owner (verified: %p)',
     async (verified) => {
       const user = createUser({ verified, publicEmail: false, publicName: false });
-      accountsDbMock.findById.mockResolvedValue(user);
+      accountsDaoMock.findById.mockResolvedValue(user);
 
       const expected = { email: user.email, name: user.name, role: user.role };
       await expect(accountsService.getAccount(user.id, user.id)).resolves.toEqual(expected);
@@ -151,7 +151,7 @@ describe('Get account', () => {
 
 describe('Update account', () => {
   test(`fails to update personal info if user doesn't exist`, async () => {
-    accountsDbMock.updateUser.mockRejectedValue(new Error());
+    accountsDaoMock.updateUser.mockRejectedValue(new Error());
 
     const uuid = randomUUID();
     await expect(accountsService.updateAccount(uuid, uuid, {})).rejects
@@ -166,7 +166,7 @@ describe('Update account', () => {
 
   test.each(updateCases)(`fails to update personal info if it's not the owner (%p)`, async (data) => {
     const user = createUser({ name: 'Old', publicName: false, publicEmail: false });
-    accountsDbMock.findById.mockResolvedValue(user);
+    accountsDaoMock.findById.mockResolvedValue(user);
 
     const otherUuid = randomUUID();
     await expect(accountsService.updateAccount(user.id, otherUuid, data)).rejects
@@ -179,8 +179,8 @@ describe('Update account', () => {
       const caller = createUser({ role: otherRole });
       const user = createUser({ role: Role.user });
 
-      accountsDbMock.findById.calledWith(caller.id).mockResolvedValue(caller);
-      accountsDbMock.findById.calledWith(user.id).mockResolvedValue(user);
+      accountsDaoMock.findById.calledWith(caller.id).mockResolvedValue(caller);
+      accountsDaoMock.findById.calledWith(user.id).mockResolvedValue(user);
 
       await expect(accountsService.updateAccount(user.id, caller.id, { role: Role.moderator }))
         .rejects
@@ -191,8 +191,8 @@ describe('Update account', () => {
     const caller = createUser({ role: Role.admin });
     const userId = randomUUID();
 
-    accountsDbMock.findById.calledWith(caller.id).mockResolvedValue(caller);
-    accountsDbMock.updateUser.mockRejectedValue(new Error());
+    accountsDaoMock.findById.calledWith(caller.id).mockResolvedValue(caller);
+    accountsDaoMock.updateUser.mockRejectedValue(new Error());
 
     await expect(accountsService.updateAccount(userId, caller.id, { role: Role.moderator }))
       .rejects
@@ -206,8 +206,8 @@ describe('Update account', () => {
   test.each(roleUserCases)('succeeds to change role if caller is an admin', async (user) => {
     const caller = createUser({ role: Role.admin });
 
-    accountsDbMock.findById.calledWith(caller.id).mockResolvedValue(caller);
-    accountsDbMock.updateUser.mockResolvedValue({ ...user, role: Role.moderator });
+    accountsDaoMock.findById.calledWith(caller.id).mockResolvedValue(caller);
+    accountsDaoMock.updateUser.mockResolvedValue({ ...user, role: Role.moderator });
 
     await expect(accountsService.updateAccount(user.id, caller.id, { role: Role.moderator }))
       .resolves
@@ -222,8 +222,8 @@ describe('Update account', () => {
     'succeeds to update data if caller is the owner (%p)',
     async (data) => {
       const user = createUser({ name: 'Old', publicName: false, publicEmail: false });
-      accountsDbMock.findById.mockResolvedValue(user);
-      accountsDbMock.updateUser.mockResolvedValue({ ...user, ...data });
+      accountsDaoMock.findById.mockResolvedValue(user);
+      accountsDaoMock.updateUser.mockResolvedValue({ ...user, ...data });
 
       const castedData = data as { name?: string, publicEmail?: boolean, publicName?: boolean };
 
@@ -239,14 +239,14 @@ describe('Update account', () => {
 
 describe('Check if user is moderator or admin', () => {
   test('non existent user returns false', async () => {
-    accountsDbMock.findById.mockResolvedValue(null);
+    accountsDaoMock.findById.mockResolvedValue(null);
 
     await expect(accountsService.isModeratorOrAdmin(randomUUID())).resolves.toEqual(false);
   });
 
   test(`user with "user" role returns false`, async () => {
     const user = createUser({ role: Role.user });
-    accountsDbMock.findById.mockResolvedValue(user);
+    accountsDaoMock.findById.mockResolvedValue(user);
 
     await expect(accountsService.isModeratorOrAdmin(user.id)).resolves.toEqual(false);
   });
@@ -254,7 +254,7 @@ describe('Check if user is moderator or admin', () => {
   const roleCases: Role[][] = [[Role.moderator], [Role.admin]];
   test.each(roleCases)('user with %p role returns true', async (role: Role) => {
     const user = createUser({ role });
-    accountsDbMock.findById.mockResolvedValue(user);
+    accountsDaoMock.findById.mockResolvedValue(user);
 
     await expect(accountsService.isModeratorOrAdmin(user.id)).resolves.toEqual(true);
   });

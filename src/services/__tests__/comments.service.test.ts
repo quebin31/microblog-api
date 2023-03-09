@@ -1,13 +1,13 @@
 import { createUser } from '../../test/factories/accounts';
-import { CommentResponse, commentsService, mapToCommentResponse } from './index';
+import { CommentResponse, commentsService, mapToCommentResponse } from '../comments.service';
 import { BadRequestError, NotFoundError } from '../../errors';
-import { commentsDb, GetAllOptions } from './database';
+import { commentsDao, GetAllOptions } from '../../dao/comments.dao';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams, PatchCommentData } from '../../schemas/comments';
 import { randomUUID } from 'crypto';
 import { createFullPost } from '../../test/factories/posts';
 import { Role } from '@prisma/client';
-import { accountsDb } from '../accounts.service/database';
+import { accountsDao } from '../../dao/accounts.dao';
 import {
   createComment,
   createFullComment,
@@ -15,15 +15,15 @@ import {
 } from '../../test/factories/comments';
 
 
-jest.mock('./database');
-jest.mock('../accounts.service/database');
+jest.mock('../../dao/comments.dao');
+jest.mock('../../dao/accounts.dao');
 
-const commentsDbMock = commentsDb as MockProxy<typeof commentsDb>;
-const accountsDbMock = accountsDb as MockProxy<typeof accountsDb>;
+const commentsDaoMock = commentsDao as MockProxy<typeof commentsDao>;
+const accountsDaoMock = accountsDao as MockProxy<typeof accountsDao>;
 
 beforeEach(() => {
-  mockReset(commentsDbMock);
-  mockReset(accountsDbMock);
+  mockReset(commentsDaoMock);
+  mockReset(accountsDaoMock);
 });
 
 describe('Map comment to response', () => {
@@ -78,7 +78,7 @@ describe('Get all comments', () => {
   });
 
   test('returns null cursor if array is empty', async () => {
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     const expected = { comments: [], cursor: null };
     await expect(commentsService.getAll({ user: 'self' })).resolves.toEqual(expected);
@@ -86,7 +86,7 @@ describe('Get all comments', () => {
 
   test('returns array and non-null cursor from last comment', async () => {
     const comments = [createFullComment(), createFullComment()];
-    commentsDbMock.getAll.mockResolvedValue(comments);
+    commentsDaoMock.getAll.mockResolvedValue(comments);
 
     const mappedComments = comments.map((it) => mapToCommentResponse(it));
     const expected = { comments: mappedComments, cursor: comments[1].createdAt };
@@ -96,12 +96,12 @@ describe('Get all comments', () => {
   test(`filtering user with 'self' is the same as using the current user id`, async () => {
     const params: GetAllParams = { user: 'self' };
     const user = createUser();
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll(params, user.id);
 
     const options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(commentsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value).toMatchObject({ user: user.id });
   });
 
@@ -109,7 +109,7 @@ describe('Get all comments', () => {
     const user1 = createUser({ publicName: false });
     const user2 = createUser({ publicName: true });
     const comments = [createFullComment({ user: user1 }), createFullComment({ user: user2 })];
-    commentsDbMock.getAll.mockResolvedValue(comments);
+    commentsDaoMock.getAll.mockResolvedValue(comments);
 
     const response = await commentsService.getAll({ post: randomUUID() });
     expect(response.comments[0].authorName).toBeNull();
@@ -119,83 +119,83 @@ describe('Get all comments', () => {
   test('author name is shown if comment is from caller user', async () => {
     const user = createUser({ publicName: false });
     const comments = [createFullComment({ user })];
-    commentsDbMock.getAll.mockResolvedValue(comments);
+    commentsDaoMock.getAll.mockResolvedValue(comments);
 
     const response = await commentsService.getAll({ user: user.id }, user.id);
     expect(response.comments[0].authorName).toEqual(user.name);
   });
 
   test(`sort order defaults to 'desc' if undefined`, async () => {
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll({ post: randomUUID() });
 
     const options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(commentsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.sort).toEqual('desc');
   });
 
   const takeDefault = 30;
   test(`number of elements to take defaults to ${takeDefault} if not defined`, async () => {
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll({ post: randomUUID() });
 
     const options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(commentsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.take).toEqual(takeDefault);
   });
 
   test(`include = 'all' only includes published comments if no caller is defined`, async () => {
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll({ post: randomUUID(), include: 'all' });
     await commentsService.getAll({ post: randomUUID() });
 
     let options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(commentsDaoMock.getAll).toHaveBeenNthCalledWith(1, options);
     expect(options.value.filterDraft).toEqual(false);
-    expect(commentsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(commentsDaoMock.getAll).toHaveBeenNthCalledWith(2, options);
     expect(options.value.filterDraft).toEqual(false);
   });
 
   test(`include = 'all' includes published and draft comments if caller is defined`, async () => {
     const user = createUser();
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll({ post: randomUUID(), include: 'all' }, user.id);
     await commentsService.getAll({ post: randomUUID() }, user.id);
 
     let options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(commentsDaoMock.getAll).toHaveBeenNthCalledWith(1, options);
     expect(options.value.filterDraft).toBeUndefined();
-    expect(commentsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(commentsDaoMock.getAll).toHaveBeenNthCalledWith(2, options);
     expect(options.value.filterDraft).toBeUndefined();
   });
 
   test(`include = 'published' filters comments that are not drafts`, async () => {
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll({ post: randomUUID(), include: 'published' });
 
     const options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(commentsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.filterDraft).toEqual(false);
   });
 
   test(`include = 'drafts' filters comments that are drafts only if caller is defined`, async () => {
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll({ post: randomUUID(), include: 'drafts' }, randomUUID());
 
     const options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(commentsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.filterDraft).toEqual(true);
   });
 
   test(`include = 'drafts' returns early if no caller is defined`, async () => {
     const comments = [createFullComment()];
-    commentsDbMock.getAll.mockResolvedValue(comments);
+    commentsDaoMock.getAll.mockResolvedValue(comments);
 
     const params: GetAllParams = { post: randomUUID(), include: 'drafts' };
     const expected = { comments: [], cursor: null };
@@ -203,16 +203,16 @@ describe('Get all comments', () => {
   });
 
   test('skips one item if cursor is defined', async () => {
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll({ post: randomUUID() });
     await commentsService.getAll({ post: randomUUID(), cursor: new Date() });
 
     let options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(commentsDaoMock.getAll).toHaveBeenNthCalledWith(1, options);
     expect(options.value.skip).toEqual(0);
 
-    expect(commentsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(commentsDaoMock.getAll).toHaveBeenNthCalledWith(2, options);
     expect(options.value.skip).toEqual(1);
   });
 
@@ -227,12 +227,12 @@ describe('Get all comments', () => {
       cursor: new Date(),
     };
 
-    commentsDbMock.getAll.mockResolvedValue([]);
+    commentsDaoMock.getAll.mockResolvedValue([]);
 
     await commentsService.getAll(params);
 
     const options = captor<GetAllOptions>();
-    expect(commentsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(commentsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value).toMatchObject(params);
   });
 });
@@ -242,7 +242,7 @@ describe('Create new comment', () => {
     const data = createNewCommentData();
     const user = createUser();
 
-    commentsDbMock.createNewComment.mockRejectedValue(new Error());
+    commentsDaoMock.createNewComment.mockRejectedValue(new Error());
 
     await expect(commentsService.newComment(data, user.id)).rejects
       .toEqual(new NotFoundError('Invalid user or post'));
@@ -254,7 +254,7 @@ describe('Create new comment', () => {
     const data = createNewCommentData({ postId: post.id });
     const comment = createFullComment({ user, post });
 
-    commentsDbMock.createNewComment.mockResolvedValue(comment);
+    commentsDaoMock.createNewComment.mockResolvedValue(comment);
 
     const expected = mapToCommentResponse(comment, user.id);
     await expect(commentsService.newComment(data, user.id)).resolves.toEqual(expected);
@@ -265,7 +265,7 @@ describe('Create new comment', () => {
 describe('Get a single comment', () => {
   test(`fails if comment with the provided id doesn't exist`, async () => {
     const commentId = randomUUID();
-    commentsDbMock.findById.mockResolvedValue(null);
+    commentsDaoMock.findById.mockResolvedValue(null);
 
     await expect(commentsService.getComment(commentId)).rejects
       .toEqual(new NotFoundError(`Couldn't find comment with id ${commentId}`));
@@ -273,7 +273,7 @@ describe('Get a single comment', () => {
 
   test(`fails if comment is a draft and caller wasn't defined`, async () => {
     const comment = createFullComment({ draft: true });
-    commentsDbMock.findById.mockResolvedValue(comment);
+    commentsDaoMock.findById.mockResolvedValue(comment);
 
     await expect(commentsService.getComment(comment.id)).rejects
       .toEqual(new NotFoundError(`Couldn't find comment with id ${comment.id}`));
@@ -281,7 +281,7 @@ describe('Get a single comment', () => {
 
   test(`fails if comment is a draft and user id doesn't match`, async () => {
     const comment = createFullComment({ draft: true });
-    commentsDbMock.findById.mockResolvedValue(comment);
+    commentsDaoMock.findById.mockResolvedValue(comment);
 
     await expect(commentsService.getComment(comment.id, randomUUID())).rejects
       .toEqual(new NotFoundError(`Couldn't find comment with id ${comment.id}`));
@@ -289,7 +289,7 @@ describe('Get a single comment', () => {
 
   test(`returns draft if provided user id matches`, async () => {
     const comment = createFullComment({ draft: true });
-    commentsDbMock.findById.mockResolvedValue(comment);
+    commentsDaoMock.findById.mockResolvedValue(comment);
 
     const expected = mapToCommentResponse(comment, comment.userId);
     await expect(commentsService.getComment(comment.id, comment.userId)).resolves.toEqual(expected);
@@ -301,7 +301,7 @@ describe('Get a single comment', () => {
     async (withUser) => {
       const user = createUser({ publicName: false });
       const comment = createFullComment({ user });
-      commentsDbMock.findById.mockResolvedValue(comment);
+      commentsDaoMock.findById.mockResolvedValue(comment);
 
       const userId = withUser ? comment.userId : undefined;
       const expected = mapToCommentResponse(comment, userId);
@@ -326,7 +326,7 @@ describe('Update a comment', () => {
 
   test('fails with not found if database update fails', async () => {
     const comment = createComment();
-    commentsDbMock.updateComment.mockRejectedValue(new Error());
+    commentsDaoMock.updateComment.mockRejectedValue(new Error());
 
     await expect(commentsService.updateComment(comment.id, {}, comment.userId)).rejects
       .toEqual(new BadRequestError(`Couldn't find comment with id ${comment.id} to update`));
@@ -339,7 +339,7 @@ describe('Update a comment', () => {
     const updated = { ...comment, ...data };
     const expected = mapToCommentResponse(updated, user.id);
 
-    commentsDbMock.updateComment.mockResolvedValue(updated);
+    commentsDaoMock.updateComment.mockResolvedValue(updated);
 
     await expect(commentsService.updateComment(comment.id, data, user.id)).resolves
       .toEqual(expected);
@@ -353,8 +353,8 @@ describe('Delete a comment', () => {
     const user = createUser();
     const commentId = randomUUID();
 
-    accountsDbMock.findById.mockResolvedValue(user);
-    commentsDbMock.deleteComment.mockRejectedValue(new Error());
+    accountsDaoMock.findById.mockResolvedValue(user);
+    commentsDaoMock.deleteComment.mockRejectedValue(new Error());
 
     await expect(commentsService.deleteComment(commentId, user.id)).rejects
       .toEqual(new NotFoundError(`Couldn't find comment with id ${commentId} to delete`));
@@ -365,13 +365,13 @@ describe('Delete a comment', () => {
     const user = createUser({ role });
     const commentId = randomUUID();
 
-    accountsDbMock.findById.mockResolvedValue(user);
-    commentsDbMock.deleteComment.mockResolvedValue();
+    accountsDaoMock.findById.mockResolvedValue(user);
+    commentsDaoMock.deleteComment.mockResolvedValue();
 
     await commentsService.deleteComment(commentId, user.id);
 
     const userId = role === 'user' ? user.id : undefined;
-    expect(commentsDbMock.deleteComment).toHaveBeenCalledTimes(1);
-    expect(commentsDbMock.deleteComment).toHaveBeenCalledWith(commentId, userId);
+    expect(commentsDaoMock.deleteComment).toHaveBeenCalledTimes(1);
+    expect(commentsDaoMock.deleteComment).toHaveBeenCalledWith(commentId, userId);
   });
 });

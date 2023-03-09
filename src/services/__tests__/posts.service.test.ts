@@ -1,5 +1,5 @@
-import { mapToPostResponse, PostResponse, postsService } from './index';
-import { GetAllOptions, postsDb } from './database';
+import { mapToPostResponse, PostResponse, postsService } from '../posts.service';
+import { GetAllOptions, postsDao } from '../../dao/posts.dao';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams, PatchPostData } from '../../schemas/posts';
 import { randomUUID } from 'crypto';
@@ -7,16 +7,16 @@ import { createNewPostData, createPost, createFullPost } from '../../test/factor
 import { createUser } from '../../test/factories/accounts';
 import { BadRequestError, NotFoundError } from '../../errors';
 import { Role } from '@prisma/client';
-import { accountsDb } from '../accounts.service/database';
+import { accountsDao } from '../../dao/accounts.dao';
 
-jest.mock('./database');
-jest.mock('../accounts.service/database');
+jest.mock('../../dao/accounts.dao');
+jest.mock('../../dao/posts.dao');
 
-const postsDbMock = postsDb as MockProxy<typeof postsDb>;
-const accountsDbMock = accountsDb as MockProxy<typeof accountsDb>;
+const accountsDaoMock = accountsDao as MockProxy<typeof accountsDao>;
+const postsDaoMock = postsDao as MockProxy<typeof postsDao>;
 
 beforeEach(() => {
-  mockReset(postsDbMock);
+  mockReset(postsDaoMock);
 });
 
 describe('Map post to response', () => {
@@ -65,7 +65,7 @@ describe('Map post to response', () => {
 
 describe('Get all posts', () => {
   test('returns null cursor if array is empty', async () => {
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     const expected = { posts: [], cursor: null };
     await expect(postsService.getAll({})).resolves.toEqual(expected);
@@ -75,7 +75,7 @@ describe('Get all posts', () => {
     const user = createUser();
     const posts = [createFullPost({ user }), createFullPost({ user })];
 
-    postsDbMock.getAll.mockResolvedValue(posts);
+    postsDaoMock.getAll.mockResolvedValue(posts);
 
     const mappedPosts = posts.map((post) => mapToPostResponse(post));
     const expected = { posts: mappedPosts, cursor: posts[1].createdAt };
@@ -85,12 +85,12 @@ describe('Get all posts', () => {
   test(`filtering user with 'self' is the same as using the current user id`, async () => {
     const params: GetAllParams = { user: 'self' };
     const user = createUser();
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll(params, user.id);
 
     const options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(postsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value).toMatchObject({ user: user.id });
   });
 
@@ -99,7 +99,7 @@ describe('Get all posts', () => {
     const user2 = createUser({ publicName: true });
     const posts = [createFullPost({ user: user1 }), createFullPost({ user: user2 })];
 
-    postsDbMock.getAll.mockResolvedValue(posts);
+    postsDaoMock.getAll.mockResolvedValue(posts);
 
     const response = await postsService.getAll({});
     expect(response.posts[0].authorName).toBeNull();
@@ -109,99 +109,99 @@ describe('Get all posts', () => {
   test('author name is shown if post is from caller user', async () => {
     const user = createUser({ publicName: false });
     const posts = [createFullPost({ user })];
-    postsDbMock.getAll.mockResolvedValue(posts);
+    postsDaoMock.getAll.mockResolvedValue(posts);
 
     const response = await postsService.getAll({}, user.id);
     expect(response.posts[0].authorName).toEqual(user.name);
   });
 
   test(`sort order defaults to 'desc' if undefined`, async () => {
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({});
 
     const options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(postsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.sort).toEqual('desc');
   });
 
   const takeDefault = 30;
   test(`number of elements to take defaults to ${takeDefault} if not defined`, async () => {
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({});
 
     const options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(postsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.take).toEqual(takeDefault);
   });
 
   test(`include = 'all' only includes published posts if no user is defined`, async () => {
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({ include: 'all' });
     await postsService.getAll({}); // defaults to 'all'
 
     let options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(postsDaoMock.getAll).toHaveBeenNthCalledWith(1, options);
     expect(options.value.filterDraft).toEqual(false);
-    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(postsDaoMock.getAll).toHaveBeenNthCalledWith(2, options);
     expect(options.value.filterDraft).toEqual(false);
   });
 
   test(`include = 'all' includes published and draft posts if user is defined`, async () => {
     const user = createUser();
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({ include: 'all' }, user.id);
     await postsService.getAll({}, user.id); // defaults to 'all'
 
     let options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(postsDaoMock.getAll).toHaveBeenNthCalledWith(1, options);
     expect(options.value.filterDraft).toBeUndefined();
-    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(postsDaoMock.getAll).toHaveBeenNthCalledWith(2, options);
     expect(options.value.filterDraft).toBeUndefined();
   });
 
   test(`include = 'published' filters post that are not drafts`, async () => {
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({ include: 'published' });
 
     const options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(postsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.filterDraft).toEqual(false);
   });
 
   test(`include = 'drafts' filters posts that are drafts only if user is defined`, async () => {
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({ include: 'drafts' }, randomUUID());
 
     const options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(postsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value.filterDraft).toEqual(true);
   });
 
   test(`include = 'drafts' returns early if no user is defined`, async () => {
     const posts = [createFullPost()];
-    postsDbMock.getAll.mockResolvedValue(posts);
+    postsDaoMock.getAll.mockResolvedValue(posts);
 
     const expected = { posts: [], cursor: null };
     await expect(postsService.getAll({ include: 'drafts' })).resolves.toEqual(expected);
   });
 
   test('skips one item if cursor is defined', async () => {
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll({});
     await postsService.getAll({ cursor: new Date() });
 
     let options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(1, options);
+    expect(postsDaoMock.getAll).toHaveBeenNthCalledWith(1, options);
     expect(options.value.skip).toEqual(0);
 
-    expect(postsDbMock.getAll).toHaveBeenNthCalledWith(2, options);
+    expect(postsDaoMock.getAll).toHaveBeenNthCalledWith(2, options);
     expect(options.value.skip).toEqual(1);
   });
 
@@ -214,12 +214,12 @@ describe('Get all posts', () => {
       cursor: new Date(),
     };
 
-    postsDbMock.getAll.mockResolvedValue([]);
+    postsDaoMock.getAll.mockResolvedValue([]);
 
     await postsService.getAll(params);
 
     const options = captor<GetAllOptions>();
-    expect(postsDbMock.getAll).toHaveBeenCalledWith(options);
+    expect(postsDaoMock.getAll).toHaveBeenCalledWith(options);
     expect(options.value).toMatchObject(params);
   });
 });
@@ -229,7 +229,7 @@ describe('Create new post', () => {
     const data = createNewPostData();
     const user = createUser();
 
-    postsDbMock.createNewPost.mockRejectedValue(new Error());
+    postsDaoMock.createNewPost.mockRejectedValue(new Error());
 
     await expect(postsService.newPost(data, user.id)).rejects.toEqual(new NotFoundError('Invalid user'));
   });
@@ -239,7 +239,7 @@ describe('Create new post', () => {
     const data = createNewPostData();
     const post = createFullPost({ user });
 
-    postsDbMock.createNewPost.mockResolvedValue(post);
+    postsDaoMock.createNewPost.mockResolvedValue(post);
 
     const expectedPost = mapToPostResponse(post, user.id);
     await expect(postsService.newPost(data, user.id)).resolves.toEqual(expectedPost);
@@ -250,7 +250,7 @@ describe('Create new post', () => {
 describe('Get a single post', () => {
   test(`fails if post with the provided id doesn't exist`, async () => {
     const postId = randomUUID();
-    postsDbMock.findById.mockResolvedValue(null);
+    postsDaoMock.findById.mockResolvedValue(null);
 
     await expect(postsService.getPost(postId)).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${postId}`));
@@ -258,7 +258,7 @@ describe('Get a single post', () => {
 
   test(`fails if post is a draft and user wasn't defined`, async () => {
     const post = createFullPost({ draft: true });
-    postsDbMock.findById.mockResolvedValue(post);
+    postsDaoMock.findById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id)).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${post.id}`));
@@ -266,7 +266,7 @@ describe('Get a single post', () => {
 
   test(`fails if post is a draft and user id doesn't match`, async () => {
     const post = createFullPost({ draft: true });
-    postsDbMock.findById.mockResolvedValue(post);
+    postsDaoMock.findById.mockResolvedValue(post);
 
     await expect(postsService.getPost(post.id, randomUUID())).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${post.id}`));
@@ -274,7 +274,7 @@ describe('Get a single post', () => {
 
   test('returns draft if provided user id matches', async () => {
     const post = createFullPost({ draft: true });
-    postsDbMock.findById.mockResolvedValue(post);
+    postsDaoMock.findById.mockResolvedValue(post);
 
     const expected = mapToPostResponse(post, post.userId);
     await expect(postsService.getPost(post.id, post.userId)).resolves.toEqual(expected);
@@ -286,7 +286,7 @@ describe('Get a single post', () => {
     async (withUser) => {
       const user = createUser({ publicName: false });
       const post = createFullPost({ user });
-      postsDbMock.findById.mockResolvedValue(post);
+      postsDaoMock.findById.mockResolvedValue(post);
 
       const userId = withUser ? post.userId : undefined;
       const expected = mapToPostResponse(post, userId);
@@ -310,7 +310,7 @@ describe('Update a post', () => {
 
   test('fails with not found if database update fails', async () => {
     const post = createPost();
-    postsDbMock.updatePost.mockRejectedValue(new Error());
+    postsDaoMock.updatePost.mockRejectedValue(new Error());
 
     await expect(postsService.updatePost(post.id, {}, post.userId)).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${post.id} to update`));
@@ -323,7 +323,7 @@ describe('Update a post', () => {
     const updated = { ...post, ...data };
     const expected = mapToPostResponse(updated, user.id);
 
-    postsDbMock.updatePost.mockResolvedValue(updated);
+    postsDaoMock.updatePost.mockResolvedValue(updated);
 
     await expect(postsService.updatePost(post.id, data, user.id)).resolves
       .toEqual(expected);
@@ -337,8 +337,8 @@ describe('Delete a post', () => {
     const user = createUser();
     const postId = randomUUID();
 
-    accountsDbMock.findById.mockResolvedValue(user);
-    postsDbMock.deletePost.mockRejectedValue(new Error());
+    accountsDaoMock.findById.mockResolvedValue(user);
+    postsDaoMock.deletePost.mockRejectedValue(new Error());
 
     await expect(postsService.deletePost(postId, user.id)).rejects
       .toEqual(new NotFoundError(`Couldn't find post with id ${postId} to delete`));
@@ -349,13 +349,13 @@ describe('Delete a post', () => {
     const user = createUser({ role });
     const postId = randomUUID();
 
-    accountsDbMock.findById.mockResolvedValue(user);
-    postsDbMock.deletePost.mockResolvedValue();
+    accountsDaoMock.findById.mockResolvedValue(user);
+    postsDaoMock.deletePost.mockResolvedValue();
 
     await postsService.deletePost(postId, user.id);
 
     const userId = role === 'user' ? user.id : undefined;
-    expect(postsDbMock.deletePost).toHaveBeenCalledTimes(1);
-    expect(postsDbMock.deletePost).toHaveBeenCalledWith(postId, userId);
+    expect(postsDaoMock.deletePost).toHaveBeenCalledTimes(1);
+    expect(postsDaoMock.deletePost).toHaveBeenCalledWith(postId, userId);
   });
 });
