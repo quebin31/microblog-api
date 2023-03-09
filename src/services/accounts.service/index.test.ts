@@ -150,7 +150,7 @@ describe('Get account', () => {
 });
 
 describe('Update account', () => {
-  test(`fails to update if user doesn't exist`, async () => {
+  test(`fails to update personal info if user doesn't exist`, async () => {
     accountsDbMock.updateUser.mockRejectedValue(new Error());
 
     const uuid = randomUUID();
@@ -187,20 +187,34 @@ describe('Update account', () => {
         .toEqual(new ForbiddenError('Only admins can change roles'));
     });
 
-  test('succeeds to change role if caller is an admin', async () => {
+  test(`fails to change role if user doesn't exist`, async () => {
     const caller = createUser({ role: Role.admin });
-    const user = createUser({ role: Role.user });
+    const userId = randomUUID();
 
     accountsDbMock.findById.calledWith(caller.id).mockResolvedValue(caller);
-    accountsDbMock.findById.calledWith(user.id).mockResolvedValue(user);
+    accountsDbMock.updateUser.mockRejectedValue(new Error());
+
+    await expect(accountsService.updateAccount(userId, caller.id, { role: Role.moderator }))
+      .rejects
+      .toEqual(new NotFoundError(`Couldn't find user with id ${userId}`));
+  });
+
+  const roleUserCases = [
+    [createUser({ role: Role.user, publicName: true, publicEmail: false })],
+    [createUser({ role: Role.user, publicName: false, publicEmail: true })],
+  ];
+  test.each(roleUserCases)('succeeds to change role if caller is an admin', async (user) => {
+    const caller = createUser({ role: Role.admin });
+
+    accountsDbMock.findById.calledWith(caller.id).mockResolvedValue(caller);
     accountsDbMock.updateUser.mockResolvedValue({ ...user, role: Role.moderator });
 
     await expect(accountsService.updateAccount(user.id, caller.id, { role: Role.moderator }))
       .resolves
-      .toEqual({
-        email: null,
-        name: user.name,
+      .toStrictEqual({
         role: Role.moderator,
+        email: user.publicEmail ? user.email : null,
+        name: user.publicName ? user.name : null,
       });
   });
 
@@ -215,10 +229,10 @@ describe('Update account', () => {
 
       await expect(accountsService.updateAccount(user.id, user.id, data))
         .resolves
-        .toEqual({
+        .toStrictEqual({
+          role: user.role,
           email: user.email,
           name: castedData?.name ?? user.name,
-          role: user.role,
         });
     });
 });
