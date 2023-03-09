@@ -1,18 +1,18 @@
 version: "3.8"
 services:
-  microblog-local-db:
-    container_name: microblog-local-db
+  microblog-test-db:
+    container_name: microblog-test-db
     image: postgres
     restart: always
     volumes:
-      - microblog-pgdata:/var/lib/postgresql/data
+      - microblog-test-pgdata:/var/lib/postgresql/data
     ports:
       - "${DB_PORT}:5432"
     environment:
       POSTGRES_USER: ${DB_USERNAME}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
-  microblog-local-redis:
-    container_name: microblog-local-redis
+  microblog-test-redis:
+    container_name: microblog-test-redis
     image: redis
     restart: always
     ports:
@@ -21,5 +21,5 @@ services:
       - redis-server
       - --requirepass ${REDIS_PASSWORD}
 volumes:
-  microblog-pgdata:
+  microblog-test-pgdata:
     external: true
