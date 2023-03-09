@@ -25,7 +25,7 @@ describe('Error Handler', () => {
       const err = new DummyRejectError(status);
       const { req, res, next } = buildExpressParams();
 
-      errorHandler(err, req, res, next);
+      errorHandler({ stack: true })(err, req, res, next);
 
       expect(res.status).toHaveBeenCalledTimes(1);
       expect(res.status).toHaveBeenCalledWith(status);
@@ -40,7 +40,7 @@ describe('Error Handler', () => {
     const err = new Error('Oops!');
     const { req, res, next } = buildExpressParams();
 
-    errorHandler(err, req, res, next);
+    errorHandler({ stack: true })(err, req, res, next);
 
     expect(res.status).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(500);
@@ -57,7 +57,7 @@ describe('Error Handler', () => {
     const err = {};
     const { req, res, next } = buildExpressParams();
 
-    errorHandler(err, req, res, next);
+    errorHandler({ stack: true })(err, req, res, next);
 
     expect(res.status).toHaveBeenCalledTimes(1);
     expect(res.status).toHaveBeenCalledWith(500);
@@ -65,10 +65,33 @@ describe('Error Handler', () => {
     expect(res.json).toHaveBeenCalledTimes(1);
     const json = captor<Rejection>();
     expect(res.json).toHaveBeenCalledWith(json);
-    expect(json).toMatchObject({
+    expect(json.value.stack).toBeDefined();
+    expect(json.value).toMatchObject({
       status: 500,
       code: 'internal_server_error',
       message: 'Something went wrong',
     });
+  });
+
+  test(`doesn't include stack if stack = false (generic error)`, () => {
+    const err = new Error('Oops!');
+    const { req, res, next } = buildExpressParams();
+
+    errorHandler({ stack: false })(err, req, res, next);
+
+    const json = captor<Rejection>();
+    expect(res.json).toHaveBeenCalledWith(json);
+    expect(json.value.stack).toBeUndefined();
+  });
+
+  test(`doesn't include stack if stack = false (reject error)`, () => {
+    const err = new DummyRejectError(400);
+    const { req, res, next } = buildExpressParams();
+
+    errorHandler({ stack: false })(err, req, res, next);
+
+    const json = captor<Rejection>();
+    expect(res.json).toHaveBeenCalledWith(json);
+    expect(json.value.stack).toBeUndefined();
   });
 });
