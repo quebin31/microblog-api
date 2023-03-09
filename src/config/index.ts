@@ -1,5 +1,6 @@
 import dotenv from 'dotenv';
 import dotenvExpand from 'dotenv-expand';
+import { requireDefined } from '../utils/types';
 
 const env = dotenv.config();
 dotenvExpand.expand(env);
@@ -52,10 +53,10 @@ switch (nodeEnv) {
 
 export default <Config>{
   nodeEnv,
-  jwtSecret: process.env.JWT_SECRET ?? overrideConfig.jwtSecret!!,
-  port: process.env.PORT ?? overrideConfig.port!!,
+  jwtSecret: process.env.JWT_SECRET ?? requireDefined(overrideConfig.jwtSecret),
+  port: process.env.PORT ?? requireDefined(overrideConfig.port),
   logLevel: 'debug',
-  redisUrl: process.env.REDIS_URL ?? overrideConfig.redisUrl!!,
-  emailApiKey: process.env.EMAIL_API_KEY ?? overrideConfig.emailApiKey!!,
+  redisUrl: process.env.REDIS_URL ?? requireDefined(overrideConfig.redisUrl),
+  emailApiKey: process.env.EMAIL_API_KEY ?? requireDefined(overrideConfig.emailApiKey),
   ...overrideConfig,
 };

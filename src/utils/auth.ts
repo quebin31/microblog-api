@@ -2,6 +2,7 @@ import bcrypt from 'bcrypt';
 import jwt, { JwtPayload } from 'jsonwebtoken';
 import { Role } from '@prisma/client';
 import validator from 'validator';
+import { requireDefined } from './types';
 
 export async function saltPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 5);
@@ -43,4 +44,8 @@ export function isValidPassword(password: string): boolean {
     minSymbols: 1,
     minNumbers: 1,
   });
+}
+
+export function requireSubject(sub?: string): string {
+  return requireDefined(sub, () => 'Required a defined subject (user id), got nothing');
 }

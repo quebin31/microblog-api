@@ -71,7 +71,7 @@ export const commentsDb = {
       },
     });
 
-    return { ...comments.at(0)!!, user };
+    return { ...comments.at(0)!, user };
   },
 
   async deleteComment(id: string, userId?: string) {

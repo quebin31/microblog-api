@@ -66,7 +66,7 @@ export const postsDb = {
       },
     });
 
-    return { ...posts.at(0)!!, user };
+    return { ...posts.at(0)!, user };
   },
 
   async deletePost(id: string, userId?: string) {

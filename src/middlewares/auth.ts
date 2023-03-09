@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import { ForbiddenError, UnauthorizedError } from '../errors';
-import { verifyJwt } from '../utils/auth';
+import { requireSubject, verifyJwt } from '../utils/auth';
 import config from '../config';
 import asyncHandler from 'express-async-handler';
 import { verificationService } from '../services/verification.service';
@@ -23,7 +23,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 }
 
 async function verifiedMiddlewareAsync(req: Request, res: Response, next: NextFunction) {
-  const userId = req.subject!;
+  const userId = requireSubject(req.subject);
   const verified = await verificationService.isVerified(userId);
   if (verified) {
     next();

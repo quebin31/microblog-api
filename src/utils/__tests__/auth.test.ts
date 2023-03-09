@@ -1,7 +1,8 @@
 import * as auth from '../auth';
+import { isValidPassword, requireSubject } from '../auth';
 import { faker } from '@faker-js/faker';
 import { Role } from '@prisma/client';
-import { isValidPassword } from '../auth';
+import { randomUUID } from 'crypto';
 
 describe('Password Salting', () => {
   test('salted password is valid compared to original password', async () => {
@@ -71,5 +72,18 @@ describe('Password validation', () => {
   ];
   test.each(invalidPasswords)('returns false with invalid password %p', (password) => {
     expect(isValidPassword(password)).toEqual(false);
+  });
+});
+
+describe('Require subject', () => {
+  test('throws error if subject is undefined', () => {
+    const subject: string | undefined = undefined;
+    expect(() => requireSubject(subject))
+      .toThrowError('Required a defined subject (user id), got nothing');
+  });
+
+  test(`returns received subject if it's not undefined`, () => {
+    const subject: string | undefined = randomUUID();
+    expect(requireSubject(subject)).toEqual(subject);
   });
 });

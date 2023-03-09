@@ -34,3 +34,13 @@ export function omit<T extends object, K extends keyof T>(obj: T, keys: K[]): Om
 
   return result as Omit<T, K>;
 }
+
+
+export function requireDefined<T>(value?: T, message?: () => string): T {
+  if (value !== undefined) {
+    return value;
+  } else {
+    const errMsg = message?.call(undefined) ?? 'Required a defined value, got nothing';
+    throw new Error(errMsg);
+  }
+}
