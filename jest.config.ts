@@ -6,7 +6,12 @@ export default <Config>{
   testEnvironment: 'node',
   verbose: true,
   collectCoverageFrom: ['src/**/*.ts'],
-  coveragePathIgnorePatterns: ['.*\.d\.ts', 'dist', 'test'],
+  coveragePathIgnorePatterns: [
+    '.*\.d\.ts',
+    'dist',
+    'test',
+    'config/.*\.ts',
+  ],
   testPathIgnorePatterns: ['<rootDir>/dist'],
   setupFilesAfterEnv: [
     '<rootDir>/src/test/mocks/sendgrid.ts',
