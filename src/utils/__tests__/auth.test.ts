@@ -53,16 +53,23 @@ describe('JSON Web Token', () => {
 
 describe('Password validation', () => {
   const validPasswords = [
-    ['pa$$word123'], ['abc!1def'], ['hello1m1okay!'], ['Pass!1235'],
+    ['pa$$word123'],
+    ['abc!1def'],
+    ['hello1m1okay!'],
+    ['Pass!1235'],
   ];
   test.each(validPasswords)('returns true with valid password %p', (password) => {
-    expect(isValidPassword(password)).toBeTruthy();
+    expect(isValidPassword(password)).toEqual(true);
   });
 
   const invalidPasswords = [
-    ['short'], ['no!numbers'], ['nosymb0ls'], ['12345511'],
+    ['short'],
+    ['no!numbers'],
+    ['nosymb0ls'],
+    ['12345511'],
+    [`s1#${faker.random.alphaNumeric(30)}`],
   ];
   test.each(invalidPasswords)('returns false with invalid password %p', (password) => {
-    expect(isValidPassword(password)).toBeFalsy();
+    expect(isValidPassword(password)).toEqual(false);
   });
 });
