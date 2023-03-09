@@ -43,6 +43,7 @@ const transports = [
 
 const logger = winston.createLogger({
   levels: logLevels,
+  silent: config.nodeEnv === 'test',
   level: config.logLevel,
   transports,
   format: format({ colorized: true }),
