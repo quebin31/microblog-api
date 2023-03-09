@@ -4,7 +4,8 @@
   ],
   "exclude": [
     "src/**/*test*",
-    "src/**/*mock*"
+    "src/**/*mock*",
+    "src/**/*integration*"
   ],
   "compilerOptions": {
     "target": "es2021",
@@ -12,13 +13,14 @@
       "esnext"
     ],
     "module": "commonjs",
+    "moduleResolution": "node",
     "rootDir": "src",
     "typeRoots": [
-      "./src/types",
-      "./node_modules/@types"
+      "src/types",
+      "node_modules/@types"
     ],
     "sourceMap": true,
-    "outDir": "./dist",
+    "outDir": "dist",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
