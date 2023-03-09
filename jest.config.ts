@@ -1,23 +1,15 @@
-import type { Config } from 'jest';
+import { JestConfigWithTsJest } from 'ts-jest';
 
-export default <Config>{
-  clearMocks: true,
-  preset: 'ts-jest',
-  testEnvironment: 'node',
-  verbose: true,
-  collectCoverageFrom: ['src/**/*.ts'],
-  coveragePathIgnorePatterns: [
-    '.*\.d\.ts',
-    'dist',
-    'test',
-    'config/.*\.ts',
-  ],
-  testPathIgnorePatterns: ['<rootDir>/dist'],
-  setupFilesAfterEnv: [
-    '<rootDir>/src/test/mocks/sendgrid.ts',
+// noinspection JSUnusedGlobalSymbols
+export default <JestConfigWithTsJest>{
+  collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
+  coverageDirectory: '<rootDir>/coverage/combined',
+  projects: [
+    '<rootDir>/jest/jest.config.unit.ts',
+    '<rootDir>/jest/jest.config.integration.ts',
   ],
   watchPlugins: [
-    require.resolve('jest-watch-typeahead/filename'),
-    require.resolve('jest-watch-typeahead/testname'),
+    'jest-watch-typeahead/filename',
+    'jest-watch-typeahead/testname',
   ],
 };
