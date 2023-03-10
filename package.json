@@ -10,7 +10,8 @@
     "redoc": "redocly preview-docs api/openapi.yaml",
     "test": "jest",
     "test:coverage": "jest --collect-coverage",
-    "test:watch": "jest --watchAll"
+    "test:watch": "jest --watchAll",
+    "setup:dev": "./scripts/setup-dev-env.sh"
   },
   "author": "Kevin Del Castillo",
   "license": "MIT",
