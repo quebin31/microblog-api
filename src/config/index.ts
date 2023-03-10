@@ -2,9 +2,6 @@ import dotenv from 'dotenv';
 import dotenvExpand from 'dotenv-expand';
 import { requireDefined } from '../utils/types';
 
-const env = dotenv.config();
-dotenvExpand.expand(env);
-
 const nodeEnvValues = ['production', 'development', 'test'] as const;
 export type NodeEnv = typeof nodeEnvValues[number];
 
@@ -37,6 +34,9 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
 if (!isValidNodeEnv(nodeEnv)) {
   throw new Error(`Received invalid value for environment variable NODE_ENV=${nodeEnv}`);
 }
+
+const env = dotenv.config({ path: `.env.${nodeEnv}` });
+dotenvExpand.expand(env);
 
 let overrideConfig: OverridableConfig;
 switch (nodeEnv) {

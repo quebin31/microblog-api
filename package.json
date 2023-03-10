@@ -8,10 +8,16 @@
     "build": "tsc -p tsconfig.json",
     "start": "npm run build && node dist/index.js",
     "redoc": "redocly preview-docs api/openapi.yaml",
-    "test": "jest",
-    "test:coverage": "jest --collect-coverage",
-    "test:watch": "jest --watchAll",
-    "setup:dev": "./scripts/setup-dev-env.sh"
+    "migrate:development": "dotenv -e .env.development prisma migrate dev",
+    "migrate:test": "dotenv -e .env.test prisma migrate deploy",
+    "setup:development": "./scripts/setup-env.sh development && npm run migrate:development",
+    "setup:test": "./scripts/setup-env.sh test && npm run migrate:test",
+    "test:all": "npm run setup:test && jest --collect-coverage",
+    "test:all:watch": "npm run setup:test && jest --watchAll",
+    "test:unit": "jest --projects jest/jest.config.unit.ts --collect-coverage",
+    "test:unit:watch": "jest --projects jest/jest.config.unit.ts --watchAll",
+    "test:integration": "npm run setup:test && jest --projects jest/jest.config.integration.ts --collect-coverage",
+    "test:integration:watch": "npm run setup:test && jest --projects jest/jest.config.integration.ts --watchAll"
   },
   "author": "Kevin Del Castillo",
   "license": "MIT",
@@ -27,6 +33,7 @@
     "@types/node": "^18.14.2",
     "@types/validator": "^13.7.12",
     "@typescript-eslint/eslint-plugin": "^5.54.0",
+    "dotenv-cli": "^7.0.0",
     "eslint": "^8.35.0",
     "eslint-config-prettier": "^8.6.0",
     "eslint-config-standard-with-typescript": "^34.0.0",
@@ -60,5 +67,8 @@
     "validator": "^13.9.0",
     "winston": "^3.8.2",
     "zod": "^3.20.6"
+  },
+  "prisma": {
+    "seed": "ts-node prisma/seeds/index.ts"
   }
 }

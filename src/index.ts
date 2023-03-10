@@ -1,5 +1,5 @@
-import server from './server';
 import config from './config';
+import server from './server';
 import logger from './logger';
 import redisClient from './redis';
 import { startCollectingEvents } from './events';
