@@ -1,5 +1,8 @@
-.env
+# Environment files
+.env*
+!.env.example
 
+# Folders
 /dist
 /node_modules
 /coverage
