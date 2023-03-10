@@ -1,13 +1,13 @@
 import { createUser } from '../../test/factories/accounts';
 import { CommentResponse, commentsService, mapToCommentResponse } from '../comments.service';
 import { BadRequestError, NotFoundError } from '../../errors';
-import { commentsDao, GetAllOptions } from '../../dao/comments.dao';
+import { commentsRepository, GetAllOptions } from '../../repositories/comments.repository';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams, PatchCommentData } from '../../schemas/comments';
 import { randomUUID } from 'crypto';
 import { createFullPost } from '../../test/factories/posts';
 import { Role } from '@prisma/client';
-import { accountsDao } from '../../dao/accounts.dao';
+import { accountsRepository } from '../../repositories/accounts.repository';
 import {
   createComment,
   createFullComment,
@@ -15,11 +15,11 @@ import {
 } from '../../test/factories/comments';
 
 
-jest.mock('../../dao/comments.dao');
-jest.mock('../../dao/accounts.dao');
+jest.mock('../../repositories/comments.repository');
+jest.mock('../../repositories/accounts.repository');
 
-const commentsDaoMock = commentsDao as MockProxy<typeof commentsDao>;
-const accountsDaoMock = accountsDao as MockProxy<typeof accountsDao>;
+const commentsDaoMock = commentsRepository as MockProxy<typeof commentsRepository>;
+const accountsDaoMock = accountsRepository as MockProxy<typeof accountsRepository>;
 
 beforeEach(() => {
   mockReset(commentsDaoMock);

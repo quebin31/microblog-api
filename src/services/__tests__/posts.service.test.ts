@@ -1,5 +1,5 @@
 import { mapToPostResponse, PostResponse, postsService } from '../posts.service';
-import { GetAllOptions, postsDao } from '../../dao/posts.dao';
+import { GetAllOptions, postsRepository } from '../../repositories/posts.repository';
 import { captor, MockProxy, mockReset } from 'jest-mock-extended';
 import { GetAllParams, PatchPostData } from '../../schemas/posts';
 import { randomUUID } from 'crypto';
@@ -7,13 +7,13 @@ import { createNewPostData, createPost, createFullPost } from '../../test/factor
 import { createUser } from '../../test/factories/accounts';
 import { BadRequestError, NotFoundError } from '../../errors';
 import { Role } from '@prisma/client';
-import { accountsDao } from '../../dao/accounts.dao';
+import { accountsRepository } from '../../repositories/accounts.repository';
 
-jest.mock('../../dao/accounts.dao');
-jest.mock('../../dao/posts.dao');
+jest.mock('../../repositories/accounts.repository');
+jest.mock('../../repositories/posts.repository');
 
-const accountsDaoMock = accountsDao as MockProxy<typeof accountsDao>;
-const postsDaoMock = postsDao as MockProxy<typeof postsDao>;
+const accountsDaoMock = accountsRepository as MockProxy<typeof accountsRepository>;
+const postsDaoMock = postsRepository as MockProxy<typeof postsRepository>;
 
 beforeEach(() => {
   mockReset(postsDaoMock);

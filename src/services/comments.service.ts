@@ -1,7 +1,7 @@
 import { Comment, Post, User } from '@prisma/client';
 import { omit } from '../utils/types';
 import { GetAllParams, NewCommentData, PatchCommentData } from '../schemas/comments';
-import { commentsDao, GetAllOptions } from '../dao/comments.dao';
+import { commentsRepository, GetAllOptions } from '../repositories/comments.repository';
 import { BadRequestError, NotFoundError } from '../errors';
 import { accountsService } from './accounts.service';
 
@@ -74,7 +74,7 @@ export const commentsService = {
       user: params.user === 'self' ? userId : params.user,
     };
 
-    const comments = await commentsDao.getAll(options);
+    const comments = await commentsRepository.getAll(options);
     const last = comments.at(comments.length - 1);
 
     const mappedComments = comments.map((it) => mapToCommentResponse(it, userId));
@@ -82,7 +82,7 @@ export const commentsService = {
   },
 
   async newComment(data: NewCommentData, userId: string) {
-    const comment = await commentsDao.createNewComment(data, userId)
+    const comment = await commentsRepository.createNewComment(data, userId)
       .catch((_) => {
         throw new NotFoundError('Invalid user or post');
       });
@@ -91,7 +91,7 @@ export const commentsService = {
   },
 
   async getComment(id: string, userId?: string) {
-    const comment = await commentsDao.findById(id);
+    const comment = await commentsRepository.findById(id);
     if (!comment || (comment.draft && comment.userId !== userId)) {
       throw new NotFoundError(`Couldn't find comment with id ${id}`);
     }
@@ -104,7 +104,7 @@ export const commentsService = {
       throw new BadRequestError(`Comments cannot be turned into drafts`);
     }
 
-    const updated = await commentsDao.updateComment(id, data, userId)
+    const updated = await commentsRepository.updateComment(id, data, userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find comment with id ${id} to update`);
       });
@@ -114,7 +114,7 @@ export const commentsService = {
 
   async deleteComment(id: string, userId: string) {
     const privileged = await accountsService.isModeratorOrAdmin(userId);
-    await commentsDao.deleteComment(id, privileged ? undefined : userId)
+    await commentsRepository.deleteComment(id, privileged ? undefined : userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find comment with id ${id} to delete`);
       });

@@ -2,7 +2,7 @@ import { SignUpData } from '../schemas/accounts';
 import { prisma } from '../prisma';
 import { User } from '@prisma/client';
 
-export const accountsDao = {
+export const accountsRepository = {
   async createNewUser(data: SignUpData) {
     return prisma.user.create({ data: data });
   },

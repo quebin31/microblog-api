@@ -6,15 +6,15 @@ import { sendGridMailMock } from '../../test/mocks/sendgrid';
 import { MailDataRequired } from '@sendgrid/mail';
 import { nolookalikes } from 'nanoid-dictionary';
 import { VerificationData } from '../../schemas/accounts';
-import { accountsDao } from '../../dao/accounts.dao';
-import { verificationDao } from '../../dao/verification.dao';
+import { accountsRepository } from '../../repositories/accounts.repository';
+import { verificationRepository } from '../../repositories/verification.repository';
 import { captor, DeepMockProxy, MockProxy, mockReset } from 'jest-mock-extended';
 
-jest.mock('../../dao/accounts.dao');
-jest.mock('../../dao/verification.dao');
+jest.mock('../../repositories/accounts.repository');
+jest.mock('../../repositories/verification.repository');
 
-const accountsDaoMock = accountsDao as MockProxy<typeof accountsDao>;
-const verificationDaoMock = verificationDao as DeepMockProxy<typeof verificationDao>;
+const accountsDaoMock = accountsRepository as MockProxy<typeof accountsRepository>;
+const verificationDaoMock = verificationRepository as DeepMockProxy<typeof verificationRepository>;
 
 beforeEach(() => {
   mockReset(accountsDaoMock);

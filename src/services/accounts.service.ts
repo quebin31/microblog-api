@@ -6,7 +6,7 @@ import { BadRequestError, ForbiddenError, NotFoundError } from '../errors';
 import { eventEmitter } from '../events';
 import { UserEmailVerificationEvent } from '../events/verification';
 import { VerificationInput } from './verification.service';
-import { accountsDao } from '../dao/accounts.dao';
+import { accountsRepository } from '../repositories/accounts.repository';
 
 export type AuthResponse = { id: string, accessToken: string };
 
@@ -23,7 +23,7 @@ export const accountsService = {
     }
 
     const saltedPassword = await saltPassword(data.password);
-    const user = await accountsDao
+    const user = await accountsRepository
       .createNewUser({ ...data, password: saltedPassword })
       .catch((_) => {
         throw new BadRequestError('Email already registered');
@@ -37,7 +37,7 @@ export const accountsService = {
   },
 
   async signIn(data: SignInData): Promise<AuthResponse> {
-    const user = await accountsDao.findByEmail(data.email);
+    const user = await accountsRepository.findByEmail(data.email);
     if (!user) {
       throw new NotFoundError('Invalid email or password');
     }
@@ -52,7 +52,7 @@ export const accountsService = {
   },
 
   async getAccount(id: string, callerId?: string): Promise<AccountResponse> {
-    const user = await accountsDao.findById(id);
+    const user = await accountsRepository.findById(id);
     const isOwner = id === callerId;
     if (!user || !user.verified && !isOwner) {
       throw new NotFoundError(`Couldn't find user with id ${id}`);
@@ -67,12 +67,12 @@ export const accountsService = {
 
   async updateAccount(id: string, updaterId: string, data: PatchAccountData): Promise<AccountResponse> {
     if ('role' in data) {
-      const updater = await accountsDao.findById(updaterId);
+      const updater = await accountsRepository.findById(updaterId);
       if (!updater || updater.role !== 'admin') {
         throw new ForbiddenError('Only admins can change roles');
       }
 
-      const updated = await accountsDao.updateUser(id, data)
+      const updated = await accountsRepository.updateUser(id, data)
         .catch((_) => {
           throw new NotFoundError(`Couldn't find user with id ${id}`);
         });
@@ -85,7 +85,7 @@ export const accountsService = {
     } else if (id !== updaterId) {
       throw new ForbiddenError(`Cannot update account`);
     } else {
-      const updated = await accountsDao.updateUser(id, data)
+      const updated = await accountsRepository.updateUser(id, data)
         .catch((_) => {
           throw new NotFoundError(`Couldn't find user with id ${id}`);
         });
@@ -99,7 +99,7 @@ export const accountsService = {
   },
 
   async isModeratorOrAdmin(id: string) {
-    const user = await accountsDao.findById(id);
+    const user = await accountsRepository.findById(id);
     return user?.role === 'moderator' || user?.role === 'admin';
   },
 };

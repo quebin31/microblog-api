@@ -1,5 +1,5 @@
 import { prisma } from '../prisma';
-import { NewCommentData, PatchCommentData } from '../schemas/comments';
+import { NewPostData, PatchPostData } from '../schemas/posts';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -7,20 +7,18 @@ export type GetAllOptions = {
   take: number,
   cursor?: Date,
   user?: string,
-  post?: string,
   filterDraft?: boolean,
 }
 
-export const commentsDao = {
+export const postsRepository = {
   async getAll(options: GetAllOptions) {
     const cursor = options.cursor !== undefined
       ? { createdAt: options.cursor }
       : undefined;
 
-    return prisma.comment.findMany({
+    return prisma.post.findMany({
       where: {
         userId: options.user,
-        postId: options.post,
         draft: options.filterDraft,
       },
       orderBy: {
@@ -29,34 +27,32 @@ export const commentsDao = {
       cursor,
       skip: options.skip,
       take: options.take,
-      include: { user: true, post: true },
+      include: { user: true },
     });
   },
 
-  async createNewComment(data: NewCommentData, userId: string) {
-    const { postId, ...rest } = data;
-    return prisma.comment.create({
+  async createNewPost(data: NewPostData, userId: string) {
+    return prisma.post.create({
       data: {
-        ...rest,
+        ...data,
         user: { connect: { id: userId } },
-        post: { connect: { id: postId } },
       },
-      include: { user: true, post: true },
+      include: { user: true },
     });
   },
 
   async findById(id: string) {
-    return prisma.comment.findUnique({
+    return prisma.post.findUnique({
       where: { id },
-      include: { user: true, post: true },
+      include: { user: true },
     });
   },
 
-  async updateComment(id: string, data: PatchCommentData, userId: string) {
-    const { comments, ...user } = await prisma.user.update({
+  async updatePost(id: string, data: PatchPostData, userId: string) {
+    const { posts, ...user } = await prisma.user.update({
       where: { id: userId },
       data: {
-        comments: {
+        posts: {
           update: {
             where: { id },
             data: data,
@@ -64,19 +60,18 @@ export const commentsDao = {
         },
       },
       include: {
-        comments: {
+        posts: {
           where: { id },
-          include: { post: true },
         },
       },
     });
 
-    return { ...comments.at(0)!, user };
+    return { ...posts.at(0)!, user };
   },
 
-  async deleteComment(id: string, userId?: string) {
+  async deletePost(id: string, userId?: string) {
     await prisma.$transaction(async (tx) => {
-      const result = await tx.comment.deleteMany({
+      const result = await tx.post.deleteMany({
         where: { id, userId },
       });
 

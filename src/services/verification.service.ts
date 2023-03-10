@@ -4,8 +4,8 @@ import { customAlphabet } from 'nanoid/async';
 import { nolookalikes } from 'nanoid-dictionary';
 import { BadRequestError, NotFoundError, TooManyRequestsError } from '../errors';
 import { VerificationData } from '../schemas/accounts';
-import { verificationDao } from '../dao/verification.dao';
-import { accountsDao } from '../dao/accounts.dao';
+import { verificationRepository } from '../repositories/verification.repository';
+import { accountsRepository } from '../repositories/accounts.repository';
 
 sendGridMail.setApiKey(config.emailApiKey);
 
@@ -25,17 +25,17 @@ export type VerificationInput = { id: string, email?: string }
 
 export const verificationService = {
   async isVerified(id: string): Promise<boolean> {
-    const isVerified = await verificationDao.isVerified.get(id);
+    const isVerified = await verificationRepository.isVerified.get(id);
     if (isVerified !== null) {
       return isVerified;
     }
 
-    const user = await accountsDao.findById(id);
+    const user = await accountsRepository.findById(id);
     if (!user) {
       throw new NotFoundError(`Couldn't find user to check verification`);
     }
 
-    await verificationDao.isVerified.set(id, user.verified);
+    await verificationRepository.isVerified.set(id, user.verified);
     return user.verified;
   },
 
@@ -50,7 +50,7 @@ export const verificationService = {
     if (maybeEmail !== undefined) {
       email = maybeEmail;
     } else {
-      const user = await accountsDao.findById(id);
+      const user = await accountsRepository.findById(id);
       if (!user) {
         throw new NotFoundError(`Couldn't find user to send email`);
       }
@@ -58,19 +58,19 @@ export const verificationService = {
       email = user.email;
     }
 
-    const requestedAt = await verificationDao.requestedAt.get(id);
+    const requestedAt = await verificationRepository.requestedAt.get(id);
     if (requestedAt !== null && requestedAt + 60 * 1000 > Date.now()) {
       throw new TooManyRequestsError('Email verifications can only be sent every 60 seconds');
     }
 
     const verificationCode = await codeGenerator();
-    await verificationDao.requestedAt.set(id, Date.now());
-    await verificationDao.code.set(id, verificationCode);
+    await verificationRepository.requestedAt.set(id, Date.now());
+    await verificationRepository.code.set(id, verificationCode);
     await sendEmailWithCode(email, verificationCode);
   },
 
   async verifyEmail(id: string, data: VerificationData) {
-    const savedCode = await verificationDao.code.get(id);
+    const savedCode = await verificationRepository.code.get(id);
     if (savedCode === null) {
       throw new NotFoundError(`Couldn't find an active verification code`);
     }
@@ -79,12 +79,12 @@ export const verificationService = {
       throw new BadRequestError('Received invalid verification code');
     }
 
-    const updated = await accountsDao.verifyUser(id)
+    const updated = await accountsRepository.verifyUser(id)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find user to verify`);
       });
 
-    await verificationDao.code.del(id);
-    await verificationDao.isVerified.set(id, updated.verified);
+    await verificationRepository.code.del(id);
+    await verificationRepository.isVerified.set(id, updated.verified);
   },
 };

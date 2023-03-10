@@ -6,16 +6,16 @@ import { saltPassword } from '../../utils/auth';
 import { eventEmitter } from '../../events';
 import { UserEmailVerificationEvent } from '../../events/verification';
 import { VerificationInput } from '../verification.service';
-import { accountsDao } from '../../dao/accounts.dao';
+import { accountsRepository } from '../../repositories/accounts.repository';
 import { randomUUID } from 'crypto';
 import { PatchAccountData } from '../../schemas/accounts';
 import { Role } from '@prisma/client';
 import { MockProxy, mockReset } from 'jest-mock-extended';
 
 jest.mock('../../events');
-jest.mock('../../dao/accounts.dao');
+jest.mock('../../repositories/accounts.repository');
 
-const accountsDaoMock = accountsDao as MockProxy<typeof accountsDao>;
+const accountsDaoMock = accountsRepository as MockProxy<typeof accountsRepository>;
 
 beforeEach(() => {
   mockReset(accountsDaoMock);

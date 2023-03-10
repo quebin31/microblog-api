@@ -1,4 +1,4 @@
-import { GetAllOptions, postsDao } from '../dao/posts.dao';
+import { GetAllOptions, postsRepository } from '../repositories/posts.repository';
 import { GetAllParams, NewPostData, PatchPostData } from '../schemas/posts';
 import { Post, User } from '@prisma/client';
 import { BadRequestError, NotFoundError } from '../errors';
@@ -66,7 +66,7 @@ export const postsService = {
       user: params.user === 'self' ? userId : params.user,
     };
 
-    const posts = await postsDao.getAll(options);
+    const posts = await postsRepository.getAll(options);
     const last = posts.at(posts.length - 1);
 
     const mappedPosts = posts.map((post) => mapToPostResponse(post, userId));
@@ -74,7 +74,7 @@ export const postsService = {
   },
 
   async newPost(data: NewPostData, userId: string): Promise<PostResponse> {
-    const post = await postsDao.createNewPost(data, userId)
+    const post = await postsRepository.createNewPost(data, userId)
       .catch((_) => {
         throw new NotFoundError('Invalid user');
       });
@@ -83,7 +83,7 @@ export const postsService = {
   },
 
   async getPost(id: string, userId?: string) {
-    const post = await postsDao.findById(id);
+    const post = await postsRepository.findById(id);
     if (!post || (post.draft && post.userId !== userId)) {
       throw new NotFoundError(`Couldn't find post with id ${id}`);
     }
@@ -96,7 +96,7 @@ export const postsService = {
       throw new BadRequestError('Posts cannot be turned into drafts');
     }
 
-    const updated = await postsDao.updatePost(id, data, userId)
+    const updated = await postsRepository.updatePost(id, data, userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find post with id ${id} to update`);
       });
@@ -106,7 +106,7 @@ export const postsService = {
 
   async deletePost(id: string, userId: string) {
     const privileged = await accountsService.isModeratorOrAdmin(userId);
-    await postsDao.deletePost(id, privileged ? undefined : userId)
+    await postsRepository.deletePost(id, privileged ? undefined : userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find post with id ${id} to delete`);
       });
