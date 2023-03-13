@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
 import { NewCommentData, PatchCommentData } from '../schemas/comments';
+import { PutVoteData } from '../schemas/votes';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -83,6 +84,28 @@ export const commentsRepository = {
       if (result.count !== 1) {
         throw new Error();
       }
+    });
+  },
+
+  async upsertVote(id: string, userId: string, data: PutVoteData) {
+    await prisma.commentVote.upsert({
+      where: {
+        userId_commentId: { userId, commentId: id },
+      },
+      update: {
+        positive: data.positive,
+      },
+      create: {
+        positive: data.positive,
+        user: { connect: { id: userId } },
+        comment: { connect: { id } },
+      },
+    });
+  },
+
+  async deleteVote(id: string, userId: string) {
+    await prisma.commentVote.delete({
+      where: { userId_commentId: { userId, commentId: id } },
     });
   },
 };

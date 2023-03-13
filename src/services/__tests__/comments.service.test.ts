@@ -14,7 +14,6 @@ import {
   createNewCommentData,
 } from '../../test/factories/comments';
 
-
 jest.mock('../../repositories/comments.repository');
 jest.mock('../../repositories/accounts.repository');
 
@@ -375,5 +374,54 @@ describe('Delete a comment', () => {
     const userId = role === 'user' ? user.id : undefined;
     expect(commentsRepositoryMock.deleteComment).toHaveBeenCalledTimes(1);
     expect(commentsRepositoryMock.deleteComment).toHaveBeenCalledWith(commentId, userId);
+  });
+});
+
+
+describe('Vote a comment', () => {
+  test('fails if database upsert fails', async () => {
+    const commentId = randomUUID();
+    const userId = randomUUID();
+    const data = { positive: true };
+
+    commentsRepositoryMock.upsertVote.mockRejectedValue(new Error());
+
+    await expect(commentsService.putVote(commentId, userId, data)).rejects
+      .toEqual(new NotFoundError(`Couldn't find comment to vote, or user`));
+  });
+
+  test('updates or creates vote on success', async () => {
+    const commentId = randomUUID();
+    const userId = randomUUID();
+    const data = { positive: false };
+    commentsRepositoryMock.upsertVote.mockResolvedValue();
+
+    await commentsService.putVote(commentId, userId, data);
+
+    expect(commentsRepositoryMock.upsertVote).toHaveBeenCalledTimes(1);
+    expect(commentsRepositoryMock.upsertVote).toHaveBeenCalledWith(commentId, userId, data);
+  });
+});
+
+describe('Delete a vote', () => {
+  test('fails if database delete fails', async () => {
+    const commentId = randomUUID();
+    const userId = randomUUID();
+
+    commentsRepositoryMock.deleteVote.mockRejectedValue(new Error());
+
+    await expect(commentsService.deleteVote(commentId, userId)).rejects
+      .toEqual(new NotFoundError(`Couldn't find related vote for the comment or user`));
+  });
+
+  test('deletes vote on success', async () => {
+    const commentId = randomUUID();
+    const userId = randomUUID();
+    commentsRepositoryMock.deleteVote.mockResolvedValue();
+
+    await commentsService.deleteVote(commentId, userId)
+
+    expect(commentsRepositoryMock.deleteVote).toHaveBeenCalledTimes(1);
+    expect(commentsRepositoryMock.deleteVote).toHaveBeenCalledWith(commentId, userId);
   });
 });

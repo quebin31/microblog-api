@@ -5,6 +5,7 @@ import { commentsRepository, GetAllOptions } from '../repositories/comments.repo
 import { BadRequestError, NotFoundError } from '../errors';
 import { accountsService } from './accounts.service';
 import { countPositiveVotes } from '../utils/votes';
+import { PutVoteData } from '../schemas/votes';
 
 export type CommentResponse = {
   id: string,
@@ -124,6 +125,20 @@ export const commentsService = {
     await commentsRepository.deleteComment(id, privileged ? undefined : userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find comment with id ${id} to delete`);
+      });
+  },
+
+  async putVote(id: string, userId: string, data: PutVoteData) {
+    await commentsRepository.upsertVote(id, userId, data)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find comment to vote, or user`);
+      });
+  },
+
+  async deleteVote(id: string, userId: string) {
+    await commentsRepository.deleteVote(id, userId)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find related vote for the comment or user`);
       });
   },
 };

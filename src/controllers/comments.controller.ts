@@ -34,3 +34,17 @@ export async function deleteComment(req: Request, res: Response) {
   await commentsService.deleteComment(commentId, userId);
   res.status(204).send();
 }
+
+export async function putVote(req: Request, res: Response) {
+  const commentId = req.params.id;
+  const userId = requireSubject(req.subject);
+  await commentsService.putVote(commentId, userId, req.body);
+  res.status(204).send()
+}
+
+export async function deleteVote(req: Request, res: Response) {
+  const commentId = req.params.id;
+  const userId = requireSubject(req.subject);
+  await commentsService.deleteVote(commentId, userId);
+  res.status(204).send()
+}
