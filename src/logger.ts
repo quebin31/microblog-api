@@ -20,7 +20,7 @@ const colorized = (colorized: boolean) => {
 };
 
 const format = (options: { colorized: boolean }) => winston.format.combine(
-  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.ms' }),
+  winston.format.timestamp({ format: 'YYYY-MM-DD HH:mm:ss.SSS (Z)' }),
   colorized(options.colorized),
   winston.format.align(),
   winston.format.printf((info) => {
