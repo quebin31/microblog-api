@@ -12,7 +12,7 @@
     "migrate:test": "dotenv -e .env.test prisma migrate deploy",
     "migrate:reset:development": "dotenv -e .env.development prisma migrate reset",
     "migrate:reset:test": "dotenv -e .env.test prisma migrate reset",
-    "migrate:deploy": "prisma migrate deploy",
+    "migrate:deploy": "dotenv -e .env.production prisma migrate deploy",
     "setup:development": "./scripts/setup-env.sh development && npm run migrate:development",
     "setup:test": "./scripts/setup-env.sh test && npm run migrate:test",
     "test:all": "npm run setup:test && jest --collect-coverage",
