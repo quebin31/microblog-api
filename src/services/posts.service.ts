@@ -1,9 +1,10 @@
 import { GetAllOptions, postsRepository } from '../repositories/posts.repository';
 import { GetAllParams, NewPostData, PatchPostData } from '../schemas/posts';
-import { Post, User } from '@prisma/client';
+import { Post, PostVote, User } from '@prisma/client';
 import { BadRequestError, NotFoundError } from '../errors';
 import { accountsService } from './accounts.service';
 import { omit } from '../utils/types';
+import { countPositiveVotes } from '../utils/votes';
 
 export type PostResponse = {
   id: string,
@@ -25,15 +26,21 @@ export type PostsResponse = {
   cursor: Date | null,
 }
 
-export type FullPost = Post & { user: User }
+export type FullPost = Post & { user: User, votes: PostVote[] }
 
 export function mapToPostResponse(post: FullPost, callerId?: string): PostResponse {
+  const { votes, ...rest } = post;
+  const positiveVotes = votes.reduce(countPositiveVotes, 0);
+  const negativeVotes = votes.length - positiveVotes;
+
   return {
-    ...omit(post, ['user', 'userId', 'updatedAt']),
+    ...omit(rest, ['user', 'userId', 'updatedAt']),
     authorName: post.user.publicName || post.user.id === callerId ? post.user.name : null,
     authorId: post.user.id,
-    score: post.positiveVotes - post.negativeVotes,
-    totalVotes: post.positiveVotes + post.negativeVotes,
+    score: positiveVotes - negativeVotes,
+    positiveVotes,
+    negativeVotes,
+    totalVotes: positiveVotes + negativeVotes,
     lastModifiedAt: post.updatedAt,
   };
 }

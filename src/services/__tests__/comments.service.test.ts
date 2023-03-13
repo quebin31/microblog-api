@@ -29,7 +29,9 @@ beforeEach(() => {
 describe('Map comment to response', () => {
   test('transforms comment into a response model', () => {
     const user = createUser({ publicName: true });
-    const comment = createFullComment({ user });
+    const votesOptions = { positiveVotes: 5, negativeVotes: 2 };
+    const comment = createFullComment({ user, votesOptions });
+
     const expected: CommentResponse = {
       id: comment.id,
       postTitle: comment.post.title,
@@ -37,10 +39,10 @@ describe('Map comment to response', () => {
       authorName: comment.user.name,
       authorId: comment.user.id,
       body: comment.body,
-      score: comment.positiveVotes - comment.negativeVotes,
-      positiveVotes: comment.positiveVotes,
-      negativeVotes: comment.negativeVotes,
-      totalVotes: comment.positiveVotes + comment.negativeVotes,
+      score: votesOptions.positiveVotes - votesOptions.negativeVotes,
+      positiveVotes: votesOptions.positiveVotes,
+      negativeVotes: votesOptions.negativeVotes,
+      totalVotes: votesOptions.positiveVotes + votesOptions.negativeVotes,
       draft: comment.draft,
       createdAt: comment.createdAt,
       lastModifiedAt: comment.updatedAt,

@@ -1,9 +1,10 @@
-import { Comment, Post, User } from '@prisma/client';
+import { Comment, CommentVote, Post, User } from '@prisma/client';
 import { omit } from '../utils/types';
 import { GetAllParams, NewCommentData, PatchCommentData } from '../schemas/comments';
 import { commentsRepository, GetAllOptions } from '../repositories/comments.repository';
 import { BadRequestError, NotFoundError } from '../errors';
 import { accountsService } from './accounts.service';
+import { countPositiveVotes } from '../utils/votes';
 
 export type CommentResponse = {
   id: string,
@@ -26,17 +27,23 @@ export type CommentsResponse = {
   cursor: Date | null,
 }
 
-export type FullComment = Comment & { post: Post, user: User }
+export type FullComment = Comment & { post: Post, user: User, votes: CommentVote[] }
 
 export function mapToCommentResponse(comment: FullComment, callerId?: string): CommentResponse {
+  const { votes, ...rest } = comment;
+  const positiveVotes = votes.reduce(countPositiveVotes, 0);
+  const negativeVotes = votes.length - positiveVotes;
+
   return {
-    ...omit(comment, ['post', 'user', 'userId', 'updatedAt']),
+    ...omit(rest, ['post', 'user', 'userId', 'updatedAt']),
     postTitle: comment.post.title,
     postId: comment.post.id,
     authorName: comment.user.publicName || comment.user.id === callerId ? comment.user.name : null,
     authorId: comment.user.id,
-    score: comment.positiveVotes - comment.negativeVotes,
-    totalVotes: comment.positiveVotes + comment.negativeVotes,
+    score: positiveVotes - negativeVotes,
+    positiveVotes,
+    negativeVotes,
+    totalVotes: positiveVotes + negativeVotes,
     lastModifiedAt: comment.updatedAt,
   };
 }

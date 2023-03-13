@@ -29,7 +29,7 @@ export const commentsRepository = {
       cursor,
       skip: options.skip,
       take: options.take,
-      include: { user: true, post: true },
+      include: { user: true, post: true, votes: true },
     });
   },
 
@@ -41,14 +41,14 @@ export const commentsRepository = {
         user: { connect: { id: userId } },
         post: { connect: { id: postId } },
       },
-      include: { user: true, post: true },
+      include: { user: true, post: true, votes: true },
     });
   },
 
   async findById(id: string) {
     return prisma.comment.findUnique({
       where: { id },
-      include: { user: true, post: true },
+      include: { user: true, post: true, votes: true },
     });
   },
 
@@ -66,7 +66,7 @@ export const commentsRepository = {
       include: {
         comments: {
           where: { id },
-          include: { post: true },
+          include: { post: true, votes: true },
         },
       },
     });

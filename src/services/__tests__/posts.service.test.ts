@@ -22,17 +22,19 @@ beforeEach(() => {
 describe('Map post to response', () => {
   test('transforms post into a response model', () => {
     const user = createUser({ publicName: true });
-    const post = createFullPost({ user });
+    const votesOptions = { positiveVotes: 4, negativeVotes: 1 };
+    const post = createFullPost({ user, votesOptions });
+
     const expected: PostResponse = {
       id: post.id,
       authorName: user.name,
       authorId: user.id,
       title: post.title,
       body: post.body,
-      score: post.positiveVotes - post.negativeVotes,
-      positiveVotes: post.positiveVotes,
-      negativeVotes: post.negativeVotes,
-      totalVotes: post.positiveVotes + post.negativeVotes,
+      score: votesOptions.positiveVotes - votesOptions.negativeVotes,
+      positiveVotes: votesOptions.positiveVotes,
+      negativeVotes: votesOptions.negativeVotes,
+      totalVotes: votesOptions.positiveVotes + votesOptions.negativeVotes,
       draft: post.draft,
       createdAt: post.createdAt,
       lastModifiedAt: post.updatedAt,

@@ -27,7 +27,7 @@ export const postsRepository = {
       cursor,
       skip: options.skip,
       take: options.take,
-      include: { user: true },
+      include: { user: true, votes: true },
     });
   },
 
@@ -37,14 +37,14 @@ export const postsRepository = {
         ...data,
         user: { connect: { id: userId } },
       },
-      include: { user: true },
+      include: { user: true, votes: true },
     });
   },
 
   async findById(id: string) {
     return prisma.post.findUnique({
       where: { id },
-      include: { user: true },
+      include: { user: true, votes: true },
     });
   },
 
@@ -62,6 +62,7 @@ export const postsRepository = {
       include: {
         posts: {
           where: { id },
+          include: { votes: true },
         },
       },
     });
