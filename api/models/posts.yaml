@@ -96,3 +96,12 @@ PostUpdate:
       maxLength: 1024
       example: |
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.
+
+PutPostVote:
+  type: object
+  properties:
+    positive:
+      description: Whether or not the vote is positive.
+      type: boolean
+  required:
+    - positive

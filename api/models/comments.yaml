@@ -101,3 +101,12 @@ CommentUpdate:
       example: |
         Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nam sed diam ut urna bibendum varius.
         draft:
+
+PutCommentVote:
+  type: object
+  properties:
+    positive:
+      description: Whether or not the vote is positive.
+      type: boolean
+  required:
+    - positive

@@ -52,6 +52,8 @@ components:
       $ref: "./models/posts.yaml#/Post"
     PostUpdate:
       $ref: "./models/posts.yaml#/PostUpdate"
+    PutPostVote:
+      $ref: "./models/posts.yaml#/PutPostVote"
 
     CommentsResponse:
       $ref: "./models/comments.yaml#/CommentsResponse"
@@ -61,6 +63,8 @@ components:
       $ref: "./models/comments.yaml#/Comment"
     CommentUpdate:
       $ref: "./models/comments.yaml#/CommentUpdate"
+    PutCommentVote:
+      $ref: "./models/comments.yaml#/PutCommentVote"
 paths:
   /accounts/sign-up:
     post:
@@ -306,6 +310,37 @@ paths:
         204:
           description: Post was successfully deleted.
 
+  /posts/{id}/votes:
+    summary: Operations for votes on posts
+    put:
+      summary: Create or update a vote
+      tags:
+        - Posts
+      operationId: createOrUpdateVote
+      description: |
+        Creates (or updates) a vote for the given post, user must be authenticated, only one vote
+        will be created per user and post.
+      requestBody:
+        description: Post vote data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutPostVote"
+      responses:
+        204:
+          description: Successfully created or updated.
+    delete:
+      summary: Delete a vote
+      tags:
+        - Posts
+      operationId: deleteVote
+      description: |
+        Deletes a vote, it doesn't count as a negative or positive vote.
+      responses:
+        204:
+          description: Successfully deleted.
+
   /comments:
     summary: Operations for comments
     get:
@@ -449,3 +484,34 @@ paths:
       responses:
         204:
           description: Comment was successfully deleted.
+
+  /comments/{id}/votes:
+    summary: Operations for votes on comments
+    put:
+      summary: Create or update a vote
+      tags:
+        - Comments
+      operationId: createOrUpdateVote
+      description: |
+        Creates (or updates) a vote for the given comment, user must be authenticated, only one vote
+        will be created per user and comment.
+      requestBody:
+        description: Comment vote data
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PutCommentVote"
+      responses:
+        204:
+          description: Successfully created or updated.
+    delete:
+      summary: Delete a vote
+      tags:
+        - Comments
+      operationId: deleteVote
+      description: |
+        Deletes a vote, it doesn't count as a negative or positive vote.
+      responses:
+        204:
+          description: Successfully deleted.
