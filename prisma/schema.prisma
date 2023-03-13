@@ -20,15 +20,17 @@ model User {
     id        String   @id @default(uuid()) @db.Uuid
     createdAt DateTime @default(now()) @map("created_at")
 
-    email       String    @unique
-    password    String
-    name        String
-    publicEmail Boolean   @default(false) @map("public_email")
-    publicName  Boolean   @default(true) @map("public_name")
-    role        Role      @default(user)
-    verified    Boolean   @default(false)
-    posts       Post[]
-    comments    Comment[]
+    email        String        @unique
+    password     String
+    name         String
+    publicEmail  Boolean       @default(false) @map("public_email")
+    publicName   Boolean       @default(true) @map("public_name")
+    role         Role          @default(user)
+    verified     Boolean       @default(false)
+    posts        Post[]
+    comments     Comment[]
+    postVotes    PostVote[]
+    commentVotes CommentVote[]
 
     @@map("users")
 }
@@ -38,15 +40,14 @@ model Post {
     createdAt DateTime @unique @default(now()) @map("created_at") @db.Timestamp(6)
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    title         String
-    body          String
-    positiveVotes Int     @default(0) @map("positive_votes")
-    negativeVotes Int     @default(0) @map("negative_votes")
-    draft         Boolean
+    title String
+    body  String
+    draft Boolean
 
-    userId   String    @map("user_id") @db.Uuid
-    user     User      @relation(fields: [userId], references: [id])
+    userId   String     @map("user_id") @db.Uuid
+    user     User       @relation(fields: [userId], references: [id])
     comments Comment[]
+    votes    PostVote[]
 
     @@map("posts")
 }
@@ -57,16 +58,41 @@ model Comment {
     createdAt DateTime @unique @default(now()) @map("created_at") @db.Timestamp(6)
     updatedAt DateTime @updatedAt @map("updated_at")
 
-    body          String
-    positiveVotes Int     @default(0) @map("positive_votes")
-    negativeVotes Int     @default(0) @map("negative_votes")
-    draft         Boolean
+    body  String
+    draft Boolean
 
     postId String @map("post_id") @db.Uuid
     post   Post   @relation(fields: [postId], references: [id])
 
-    userId String @map("user_id") @db.Uuid
-    user   User   @relation(fields: [userId], references: [id])
+    userId String        @map("user_id") @db.Uuid
+    user   User          @relation(fields: [userId], references: [id])
+    votes  CommentVote[]
 
     @@map("comments")
+}
+
+model PostVote {
+    userId String @map("user_id") @db.Uuid
+    postId String @map("post_id") @db.Uuid
+
+    positive Boolean
+
+    user User @relation(fields: [userId], references: [id])
+    post Post @relation(fields: [postId], references: [id])
+
+    @@id([userId, postId])
+    @@map("posts_votes")
+}
+
+model CommentVote {
+    userId    String @map("user_id") @db.Uuid
+    commentId String @map("comment_id") @db.Uuid
+
+    positive Boolean
+
+    user    User    @relation(fields: [userId], references: [id])
+    comment Comment @relation(fields: [commentId], references: [id])
+
+    @@id([userId, commentId])
+    @@map("comments_votes")
 }
