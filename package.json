@@ -2,14 +2,16 @@
   "name": "microblog-api",
   "version": "0.1.0",
   "description": "A microblog API",
-  "main": "dist/index.js",
+  "main": "dist/src/index.js",
   "scripts": {
     "serve": "nodemon src/index.ts",
     "build": "tsc -p tsconfig.json",
-    "start": "npm run build && node dist/index.js",
+    "start": "npm run build && node dist/src/index.js",
     "redoc": "redocly preview-docs api/openapi.yaml",
     "migrate:development": "dotenv -e .env.development prisma migrate dev",
     "migrate:test": "dotenv -e .env.test prisma migrate deploy",
+    "migrate:reset:development": "dotenv -e .env.development prisma migrate reset",
+    "migrate:reset:test": "dotenv -e .env.test prisma migrate reset",
     "setup:development": "./scripts/setup-env.sh development && npm run migrate:development",
     "setup:test": "./scripts/setup-env.sh test && npm run migrate:test",
     "test:all": "npm run setup:test && jest --collect-coverage",
@@ -69,6 +71,6 @@
     "zod": "^3.20.6"
   },
   "prisma": {
-    "seed": "ts-node prisma/seeds/index.ts"
+    "seed": "ts-node prisma/seed.ts"
   }
 }

@@ -1,6 +1,7 @@
 {
   "include": [
-    "src/**/*.ts"
+    "src/**/*.ts",
+    "prisma/**/*.ts"
   ],
   "exclude": [
     "src/**/*test*",
@@ -14,7 +15,10 @@
     ],
     "module": "commonjs",
     "moduleResolution": "node",
-    "rootDir": "src",
+    "rootDirs": [
+      "src",
+      "prisma",
+    ],
     "typeRoots": [
       "src/types",
       "node_modules/@types"
