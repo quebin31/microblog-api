@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "A microblog API",
   "main": "dist/src/index.js",
+  "engines": {
+    "node": ">=19"
+  },
   "scripts": {
     "serve": "nodemon src/index.ts",
     "build": "tsc -p tsconfig.json",
