@@ -361,3 +361,51 @@ describe('Delete a post', () => {
     expect(postsRepositoryMock.deletePost).toHaveBeenCalledWith(postId, userId);
   });
 });
+
+describe('Vote a post', () => {
+  test('fails if database upsert fails', async () => {
+    const postId = randomUUID();
+    const userId = randomUUID();
+    const data = { positive: true };
+
+    postsRepositoryMock.upsertVote.mockRejectedValue(new Error());
+
+    await expect(postsService.putVote(postId, userId, data)).rejects
+      .toEqual(new NotFoundError(`Couldn't find post to vote, or user`));
+  });
+
+  test('updates or creates vote on success', async () => {
+    const postId = randomUUID();
+    const userId = randomUUID();
+    const data = { positive: false };
+    postsRepositoryMock.upsertVote.mockResolvedValue();
+
+    await postsService.putVote(userId, postId, data)
+
+    expect(postsRepositoryMock.upsertVote).toHaveBeenCalledTimes(1);
+    expect(postsRepositoryMock.upsertVote).toHaveBeenCalledWith(userId, postId, data);
+  });
+});
+
+describe('Delete a vote', () => {
+  test('fails if database delete fails', async () => {
+    const postId = randomUUID();
+    const userId = randomUUID();
+
+    postsRepositoryMock.deleteVote.mockRejectedValue(new Error());
+
+    await expect(postsService.deleteVote(postId, userId)).rejects
+      .toEqual(new NotFoundError(`Couldn't find related vote for the post or user`));
+  });
+
+  test('deletes vote on success', async () => {
+    const postId = randomUUID();
+    const userId = randomUUID();
+    postsRepositoryMock.deleteVote.mockResolvedValue();
+
+    await postsService.deleteVote(userId, postId);
+
+    expect(postsRepositoryMock.deleteVote).toHaveBeenCalledTimes(1);
+    expect(postsRepositoryMock.deleteVote).toHaveBeenCalledWith(userId, postId);
+  });
+});

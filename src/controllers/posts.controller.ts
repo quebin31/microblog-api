@@ -34,3 +34,17 @@ export async function deletePost(req: Request, res: Response) {
   await postsService.deletePost(postId, userId);
   res.status(204).send();
 }
+
+export async function putVote(req: Request, res: Response) {
+  const postId = req.params.id;
+  const userId = requireSubject(req.subject);
+  await postsService.putVote(postId, userId, req.body);
+  res.status(204).send();
+}
+
+export async function deleteVote(req: Request, res: Response) {
+  const postId = req.params.id;
+  const userId = requireSubject(req.subject);
+  await postsService.deleteVote(postId, userId);
+  res.status(204).send();
+}

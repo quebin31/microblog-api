@@ -1,5 +1,6 @@
 import { prisma } from '../prisma';
 import { NewPostData, PatchPostData } from '../schemas/posts';
+import { PutVoteData } from '../schemas/votes';
 
 export type GetAllOptions = {
   sort: 'desc' | 'asc',
@@ -80,5 +81,25 @@ export const postsRepository = {
         throw new Error();
       }
     });
+  },
+
+  async upsertVote(id: string, userId: string, data: PutVoteData) {
+    await prisma.postVote.upsert({
+      where: {
+        userId_postId: { userId, postId: id },
+      },
+      update: {
+        positive: data.positive,
+      },
+      create: {
+        positive: data.positive,
+        user: { connect: { id: userId } },
+        post: { connect: { id } },
+      },
+    });
+  },
+
+  async deleteVote(id: string, userId: string) {
+    await prisma.postVote.delete({ where: { userId_postId: { userId, postId: id } } });
   },
 };

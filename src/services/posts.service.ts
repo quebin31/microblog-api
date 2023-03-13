@@ -5,6 +5,7 @@ import { BadRequestError, NotFoundError } from '../errors';
 import { accountsService } from './accounts.service';
 import { omit } from '../utils/types';
 import { countPositiveVotes } from '../utils/votes';
+import { PutVoteData } from '../schemas/votes';
 
 export type PostResponse = {
   id: string,
@@ -116,6 +117,20 @@ export const postsService = {
     await postsRepository.deletePost(id, privileged ? undefined : userId)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find post with id ${id} to delete`);
+      });
+  },
+
+  async putVote(id: string, userId: string, data: PutVoteData) {
+    await postsRepository.upsertVote(id, userId, data)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find post to vote, or user`);
+      });
+  },
+
+  async deleteVote(id: string, userId: string) {
+    await postsRepository.deleteVote(id, userId)
+      .catch((_) => {
+        throw new NotFoundError(`Couldn't find related vote for the post or user`);
       });
   },
 };
