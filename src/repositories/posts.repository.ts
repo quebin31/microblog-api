@@ -48,7 +48,7 @@ export const postsRepository = {
     });
   },
 
-  async updatePost(id: string, data: PatchPostData, userId: string) {
+  async updatePost(id: string, userId: string, data: PatchPostData) {
     const { posts, ...user } = await prisma.user.update({
       where: { id: userId },
       data: {

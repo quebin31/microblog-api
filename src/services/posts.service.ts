@@ -98,12 +98,12 @@ export const postsService = {
     return mapToPostResponse(post, userId);
   },
 
-  async updatePost(id: string, data: PatchPostData, userId: string) {
+  async updatePost(id: string, userId: string, data: PatchPostData) {
     if (data.draft === true) {
       throw new BadRequestError('Posts cannot be turned into drafts');
     }
 
-    const updated = await postsRepository.updatePost(id, data, userId)
+    const updated = await postsRepository.updatePost(id, userId, data)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find post with id ${id} to update`);
       });

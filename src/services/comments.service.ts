@@ -106,12 +106,12 @@ export const commentsService = {
     return mapToCommentResponse(comment, userId);
   },
 
-  async updateComment(id: string, data: PatchCommentData, userId: string) {
+  async updateComment(id: string, userId: string, data: PatchCommentData) {
     if (data.draft === true) {
       throw new BadRequestError(`Comments cannot be turned into drafts`);
     }
 
-    const updated = await commentsRepository.updateComment(id, data, userId)
+    const updated = await commentsRepository.updateComment(id, userId, data)
       .catch((_) => {
         throw new NotFoundError(`Couldn't find comment with id ${id} to update`);
       });

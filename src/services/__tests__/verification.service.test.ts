@@ -13,26 +13,26 @@ import { captor, DeepMockProxy, MockProxy, mockReset } from 'jest-mock-extended'
 jest.mock('../../repositories/accounts.repository');
 jest.mock('../../repositories/verification.repository');
 
-const accountsDaoMock = accountsRepository as MockProxy<typeof accountsRepository>;
-const verificationDaoMock = verificationRepository as DeepMockProxy<typeof verificationRepository>;
+const accountsRepositoryMock = accountsRepository as MockProxy<typeof accountsRepository>;
+const verificationRepositoryMock = verificationRepository as DeepMockProxy<typeof verificationRepository>;
 
 beforeEach(() => {
-  mockReset(accountsDaoMock);
-  mockReset(verificationDaoMock);
+  mockReset(accountsRepositoryMock);
+  mockReset(verificationRepositoryMock);
 });
 
 describe('Check if user is verified', () => {
   const verifiedValues = [[false], [true]];
 
   test.each(verifiedValues)('returns value %p from cache (if available)', async (cached) => {
-    verificationDaoMock.isVerified.get.mockResolvedValue(cached);
+    verificationRepositoryMock.isVerified.get.mockResolvedValue(cached);
 
     await expect(verificationService.isVerified(randomUUID())).resolves.toEqual(cached);
   });
 
   test(`fails if there isn't cache and user doesn't exist`, async () => {
-    verificationDaoMock.isVerified.get.mockResolvedValue(null);
-    accountsDaoMock.findById.mockResolvedValue(null);
+    verificationRepositoryMock.isVerified.get.mockResolvedValue(null);
+    accountsRepositoryMock.findById.mockResolvedValue(null);
 
     await expect(verificationService.isVerified(randomUUID())).rejects
       .toEqual(new NotFoundError(`Couldn't find user to check verification`));
@@ -40,18 +40,18 @@ describe('Check if user is verified', () => {
 
   test.each(verifiedValues)(`returns user verified value %p and caches value`, async (verified) => {
     const user = createUser({ verified });
-    verificationDaoMock.isVerified.get.mockResolvedValue(null);
-    accountsDaoMock.findById.mockResolvedValue(user);
+    verificationRepositoryMock.isVerified.get.mockResolvedValue(null);
+    accountsRepositoryMock.findById.mockResolvedValue(user);
 
     await expect(verificationService.isVerified(user.id)).resolves.toEqual(verified);
 
-    expect(verificationDaoMock.isVerified.set).toHaveBeenCalledWith(user.id, verified);
+    expect(verificationRepositoryMock.isVerified.set).toHaveBeenCalledWith(user.id, verified);
   });
 });
 
 describe('Send email verification', function() {
   test('fails if no user exists with given id', async () => {
-    accountsDaoMock.findById.mockResolvedValue(null);
+    accountsRepositoryMock.findById.mockResolvedValue(null);
 
     await expect(verificationService.sendVerificationEmail({ id: randomUUID() })).rejects.toEqual(
       new NotFoundError(`Couldn't find user to send email`),
@@ -64,8 +64,8 @@ describe('Send email verification', function() {
     async (withCache) => {
       const user = createUser({ verified: true });
 
-      accountsDaoMock.findById.mockResolvedValue(user);
-      verificationDaoMock.isVerified.get.mockResolvedValue(withCache ? true : null);
+      accountsRepositoryMock.findById.mockResolvedValue(user);
+      verificationRepositoryMock.isVerified.get.mockResolvedValue(withCache ? true : null);
 
       await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects
         .toEqual(new BadRequestError('User has already been verified'));
@@ -74,9 +74,9 @@ describe('Send email verification', function() {
   test('fails if not enough time has passed since last sent', async () => {
     const user = createUser();
 
-    accountsDaoMock.findById.mockResolvedValue(user);
-    verificationDaoMock.requestedAt.get.mockResolvedValue(Date.now());
-    verificationDaoMock.isVerified.get.mockResolvedValue(null);
+    accountsRepositoryMock.findById.mockResolvedValue(user);
+    verificationRepositoryMock.requestedAt.get.mockResolvedValue(Date.now());
+    verificationRepositoryMock.isVerified.get.mockResolvedValue(null);
 
     await expect(verificationService.sendVerificationEmail({ id: user.id })).rejects
       .toEqual(new TooManyRequestsError('Email verifications can only be sent every 60 seconds'));
@@ -90,19 +90,19 @@ describe('Send email verification', function() {
       const user = createUser();
       const input = { id: user.id, email: withEmail ? user.email : undefined };
 
-      accountsDaoMock.findById.mockResolvedValue(user);
-      verificationDaoMock.requestedAt.get.mockResolvedValue(null);
-      verificationDaoMock.isVerified.get.mockResolvedValue(null);
+      accountsRepositoryMock.findById.mockResolvedValue(user);
+      verificationRepositoryMock.requestedAt.get.mockResolvedValue(null);
+      verificationRepositoryMock.isVerified.get.mockResolvedValue(null);
 
       await verificationService.sendVerificationEmail(input);
 
       const requestedAtCaptor = captor<number>();
-      expect(verificationDaoMock.requestedAt.set).toHaveBeenCalledWith(user.id, requestedAtCaptor);
+      expect(verificationRepositoryMock.requestedAt.set).toHaveBeenCalledWith(user.id, requestedAtCaptor);
       expect(requestedAtCaptor.value).toBeLessThanOrEqual(Date.now());
       expect(requestedAtCaptor.value).toBeGreaterThanOrEqual(before);
 
       const verificationCodeCaptor = captor<string>();
-      expect(verificationDaoMock.code.set).toHaveBeenCalledWith(user.id, verificationCodeCaptor);
+      expect(verificationRepositoryMock.code.set).toHaveBeenCalledWith(user.id, verificationCodeCaptor);
       const regex = new RegExp(`^[${nolookalikes}]{6}$`);
       const verificationCode = verificationCodeCaptor.value;
       expect(regex.test(verificationCodeCaptor.value)).toBeTruthy();
@@ -127,7 +127,7 @@ describe('Verify email', () => {
     const user = createUser();
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    verificationDaoMock.code.get.mockResolvedValue(null);
+    verificationRepositoryMock.code.get.mockResolvedValue(null);
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new NotFoundError(`Couldn't find an active verification code`),
@@ -138,7 +138,7 @@ describe('Verify email', () => {
     const user = createUser();
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    verificationDaoMock.code.get.mockResolvedValue('123ABC');
+    verificationRepositoryMock.code.get.mockResolvedValue('123ABC');
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new BadRequestError('Received invalid verification code'),
@@ -149,8 +149,8 @@ describe('Verify email', () => {
     const user = createUser();
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    accountsDaoMock.verifyUser.mockRejectedValueOnce(new Error(''));
-    verificationDaoMock.code.get.mockResolvedValue('ABC123');
+    accountsRepositoryMock.verifyUser.mockRejectedValueOnce(new Error(''));
+    verificationRepositoryMock.code.get.mockResolvedValue('ABC123');
 
     await expect(verificationService.verifyEmail(user.id, data)).rejects.toEqual(
       new NotFoundError(`Couldn't find user to verify`),
@@ -162,17 +162,17 @@ describe('Verify email', () => {
     const updated = createUser({ ...user, verified: true });
     const data: VerificationData = { verificationCode: 'ABC123' };
 
-    accountsDaoMock.verifyUser.mockResolvedValue(updated);
-    verificationDaoMock.code.get.mockResolvedValue('ABC123');
+    accountsRepositoryMock.verifyUser.mockResolvedValue(updated);
+    verificationRepositoryMock.code.get.mockResolvedValue('ABC123');
 
     await verificationService.verifyEmail(user.id, data);
 
-    expect(accountsDaoMock.verifyUser).toHaveBeenCalledTimes(1);
-    expect(accountsDaoMock.verifyUser).toHaveBeenCalledWith(user.id);
+    expect(accountsRepositoryMock.verifyUser).toHaveBeenCalledTimes(1);
+    expect(accountsRepositoryMock.verifyUser).toHaveBeenCalledWith(user.id);
 
-    expect(verificationDaoMock.code.del).toHaveBeenCalledTimes(1);
-    expect(verificationDaoMock.code.del).toHaveBeenCalledWith(user.id);
-    expect(verificationDaoMock.isVerified.set).toHaveBeenCalledTimes(1);
-    expect(verificationDaoMock.isVerified.set).toHaveBeenCalledWith(user.id, true);
+    expect(verificationRepositoryMock.code.del).toHaveBeenCalledTimes(1);
+    expect(verificationRepositoryMock.code.del).toHaveBeenCalledWith(user.id);
+    expect(verificationRepositoryMock.isVerified.set).toHaveBeenCalledTimes(1);
+    expect(verificationRepositoryMock.isVerified.set).toHaveBeenCalledWith(user.id, true);
   });
 });

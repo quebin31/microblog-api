@@ -52,7 +52,7 @@ export const commentsRepository = {
     });
   },
 
-  async updateComment(id: string, data: PatchCommentData, userId: string) {
+  async updateComment(id: string, userId: string, data: PatchCommentData) {
     const { comments, ...user } = await prisma.user.update({
       where: { id: userId },
       data: {

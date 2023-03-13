@@ -24,7 +24,7 @@ export async function getPost(req: Request, res: Response) {
 export async function patchPost(req: Request, res: Response) {
   const postId = req.params.id;
   const userId = requireSubject(req.subject);
-  const updated = await postsService.updatePost(postId, req.body, userId);
+  const updated = await postsService.updatePost(postId, userId, req.body);
   res.status(200).json(updated);
 }
 
