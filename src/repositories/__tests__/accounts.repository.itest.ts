@@ -5,6 +5,7 @@ import { captor } from 'jest-mock-extended';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 import { faker } from '@faker-js/faker';
 import { randomUUID } from 'crypto';
+import { insertTestUser } from '../../test/db/accounts';
 
 beforeEach(async () => {
   await clearDatabase();
@@ -40,15 +41,13 @@ describe('Find a user', () => {
   });
 
   test('returns found user by email', async () => {
-    const data = createSignUpData();
-    const user = await accountsRepository.createNewUser(data);
+    const user = await insertTestUser();
 
     await expect(accountsRepository.findByEmail(user.email)).resolves.toStrictEqual(user);
   });
 
   test('returns found user by id', async () => {
-    const data = createSignUpData();
-    const user = await accountsRepository.createNewUser(data);
+    const user = await insertTestUser();
 
     await expect(accountsRepository.findById(user.id)).resolves.toStrictEqual(user);
   });
@@ -63,8 +62,7 @@ describe('Verify a user', () => {
   });
 
   test('updates verified state of existent user', async () => {
-    const data = createSignUpData();
-    const user = await accountsRepository.createNewUser(data);
+    const user = await insertTestUser();
     expect(user.verified).toEqual(false);
 
     const updated = await accountsRepository.verifyUser(user.id);
@@ -81,8 +79,7 @@ describe('Update a user', () => {
   });
 
   test('updates user data of existent user', async () => {
-    const data = createSignUpData();
-    const user = await accountsRepository.createNewUser(data);
+    const user = await insertTestUser();
     const newData = { name: 'New name' };
 
     const updated = await accountsRepository.updateUser(user.id, newData);
