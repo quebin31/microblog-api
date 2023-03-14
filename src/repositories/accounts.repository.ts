@@ -1,6 +1,5 @@
-import { SignUpData } from '../schemas/accounts';
+import { PatchAccountData, SignUpData } from '../schemas/accounts';
 import { prisma } from '../prisma';
-import { User } from '@prisma/client';
 
 export const accountsRepository = {
   async createNewUser(data: SignUpData) {
@@ -19,7 +18,7 @@ export const accountsRepository = {
     return prisma.user.update({ where: { id }, data: { verified: true } });
   },
 
-  async updateUser(id: string, data: Partial<User>) {
+  async updateUser(id: string, data: PatchAccountData) {
     return prisma.user.update({ where: { id }, data: data });
   },
 };
