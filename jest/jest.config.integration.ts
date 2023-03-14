@@ -11,7 +11,7 @@ export default <JestConfigWithTsJest>{
   collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
   coverageDirectory: '<rootDir>/coverage/integration',
   coveragePathIgnorePatterns: ['.*\.d\.ts', 'test', 'integration', 'config/.*\.ts'],
-  testMatch: ['**/__tests__/*.integration.ts', '**/*.integration.ts'],
+  testMatch: ['**/__tests__/*.itest.ts', '**/*.itest.ts'],
   maxConcurrency: 1,
   setupFilesAfterEnv: [
     '<rootDir>/jest/setup-integration.ts',
