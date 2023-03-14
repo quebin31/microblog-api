@@ -7,10 +7,11 @@
     "node": ">=19"
   },
   "scripts": {
-    "serve": "nodemon src/index.ts",
-    "build": "tsc -p tsconfig.json",
+    "serve": "npm run redoc:build && nodemon src/index.ts",
+    "build": "tsc -p tsconfig.json && npm run redoc:build",
     "start": "npm run build && node dist/src/index.js",
-    "redoc": "redocly preview-docs api/openapi.yaml",
+    "redoc:watch": "redocly preview-docs api/openapi.yaml",
+    "redoc:build": "redocly build-docs api/openapi.yaml -o build/redoc.html",
     "migrate:development": "dotenv -e .env.development prisma migrate dev",
     "migrate:test": "dotenv -e .env.test prisma migrate deploy",
     "migrate:reset:development": "dotenv -e .env.development prisma migrate reset",

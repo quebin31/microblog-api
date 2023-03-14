@@ -15,6 +15,7 @@ export function buildRes(partial?: Partial<Response> | object): Response {
     json: jest.fn(() => res),
     send: jest.fn(() => res),
     sendStatus: jest.fn(() => res),
+    sendFile: jest.fn(() => res),
     ...partial,
   };
 
