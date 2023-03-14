@@ -59,6 +59,7 @@ describe('Verify a user', () => {
     const error = captor<PrismaClientKnownRequestError>();
     await expect(accountsRepository.verifyUser(randomUUID())).rejects.toEqual(error);
     expect(error.value.code).toEqual('P2025');
+    expect(error.value.meta?.cause).toMatchInlineSnapshot(`"Record to update not found."`);
   });
 
   test('updates verified state of existent user', async () => {
@@ -76,6 +77,7 @@ describe('Update a user', () => {
     const error = captor<PrismaClientKnownRequestError>();
     await expect(accountsRepository.updateUser(randomUUID(), {})).rejects.toEqual(error);
     expect(error.value.code).toEqual('P2025');
+    expect(error.value.meta?.cause).toMatchInlineSnapshot(`"Record to update not found."`);
   });
 
   test('updates user data of existent user', async () => {
