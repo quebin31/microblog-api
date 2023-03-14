@@ -222,16 +222,11 @@ paths:
           required: false
           description: |
             Which posts to include, by default will include `all` posts, though, drafts will only be included when
-            filtering for the current user (i.e. `user=self`). The value `all` is an alias for `published,drafts`.
-          style: form
-          explode: false
+            filtering for the current user (i.e. `user=self`).
           schema:
-            type: array
-            default: [ all ]
-            uniqueItems: true
-            items:
-              type: string
-              enum: [ all, published, drafts ]
+            type: string
+            enum: [ all, published, drafts ]
+            default: all
       responses:
         200:
           description: Successful response
@@ -397,16 +392,11 @@ paths:
           required: false
           description: |
             Which comments to include, by default will include `all` published comments. Drafts will only be included 
-            when filtering for the current user (i.e. `user=self`). The value `all` is an alias for `published,drafts`.
-          style: form
-          explode: false
+            when filtering for the current user (i.e. `user=self`).
           schema:
-            type: array
-            default: [ all ]
-            uniqueItems: true
-            items:
-              type: string
-              enum: [ all, published, drafts ]
+            type: string
+            enum: [ all, published, drafts ]
+            default: all
       responses:
         200:
           description: Successful response.
