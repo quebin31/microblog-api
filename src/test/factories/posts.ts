@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { faker } from '@faker-js/faker';
 import { NewPostData } from '../../schemas/posts';
 import { createUser } from './accounts';
-import { FullPost } from '../../services/posts.service';
+import { FullPost, PostResponse, PostsResponse } from '../../services/posts.service';
 
 export function createPost(overrides?: Partial<Post>): Post {
   return {
@@ -57,4 +57,31 @@ export function createNewPostData(overrides?: Partial<NewPostData>): NewPostData
     draft: false,
     ...overrides,
   };
+}
+
+export function createPostResponse(overrides?: Partial<PostResponse>): PostResponse {
+  return {
+    id: faker.datatype.uuid(),
+    authorId: faker.datatype.uuid(),
+    authorName: faker.name.firstName(),
+    title: faker.lorem.words(10),
+    body: faker.lorem.words(6),
+    createdAt: new Date(),
+    draft: false,
+    lastModifiedAt: new Date(),
+    negativeVotes: 0,
+    positiveVotes: 0,
+    score: 0,
+    totalVotes: 0,
+    ...overrides,
+  };
+}
+
+export function createPostsResponse(qty: number = 5): PostsResponse {
+  const posts: PostResponse[] = [];
+  for (let i = 0; i < qty; i += 1) {
+    posts.push(createPostResponse());
+  }
+
+  return { posts, cursor: posts[posts.length - 1].createdAt };
 }
