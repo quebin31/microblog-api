@@ -24,7 +24,7 @@ beforeEach(() => {
 });
 
 describe('Sign up', () => {
-  test('responds with 200 OK with result from service', async () => {
+  test('responds with 200 OK with data', async () => {
     const result = createAuthResponse();
     const data = createSignUpData();
     const req = buildReq({ body: data });
@@ -39,7 +39,7 @@ describe('Sign up', () => {
 });
 
 describe('Sign in', () => {
-  test('responds with 200 OK with result from service', async () => {
+  test('responds with 200 OK with data', async () => {
     const result = createAuthResponse();
     const data = createSignInData();
     const req = buildReq({ body: data });
@@ -93,7 +93,7 @@ describe('Verify email', () => {
 });
 
 describe('Get account', () => {
-  test('responds with 200 OK with undefined subject', async () => {
+  test('responds with 200 OK (with undefined subject)', async () => {
     const result = createAccountResponse();
     const userId = randomUUID();
     const req = buildReq({ params: { id: userId } });
@@ -106,7 +106,7 @@ describe('Get account', () => {
     expect(res.json).toHaveBeenCalledWith(result);
   });
 
-  test('responds with 200 OK with defined subject', async () => {
+  test('responds with 200 OK (with defined subject)', async () => {
     const result = createAccountResponse();
     const userId = randomUUID();
     const subject = randomUUID();

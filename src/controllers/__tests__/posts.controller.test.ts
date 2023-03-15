@@ -16,7 +16,7 @@ jest.mock('../../services/posts.service');
 const postsServiceMock = postsService as MockProxy<typeof postsService>;
 
 describe('Get all posts', () => {
-  test('responds with 200 OK with undefined subject', async () => {
+  test('responds with 200 OK (with undefined subject)', async () => {
     const query: GetAllParams = { sort: 'desc' };
     const result = createPostsResponse();
     const req = buildReq({ query });
@@ -29,7 +29,7 @@ describe('Get all posts', () => {
     expect(res.json).toHaveBeenCalledWith(result);
   });
 
-  test('responds with 200 OK with defined subject', async () => {
+  test('responds with 200 OK (with defined subject)', async () => {
     const query: GetAllParams = { sort: 'asc', take: 2 };
     const subject = randomUUID();
     const result = createPostsResponse();
@@ -66,7 +66,7 @@ describe('Create new post', () => {
 });
 
 describe('Get a post', () => {
-  test('responds with 200 OK with undefined subject', async () => {
+  test('responds with 200 OK (with undefined subject)', async () => {
     const result = createPostResponse();
     const postId = randomUUID();
     const req = buildReq({ params: { id: postId } });
@@ -79,7 +79,7 @@ describe('Get a post', () => {
     expect(res.json).toHaveBeenCalledWith(result);
   });
 
-  test('responds with 200 OK with defined subject', async () => {
+  test('responds with 200 OK (with defined subject)', async () => {
     const result = createPostResponse();
     const postId = randomUUID();
     const subject = randomUUID();
