@@ -3,7 +3,7 @@ import { randomUUID } from 'crypto';
 import { faker } from '@faker-js/faker';
 import { createUser } from './accounts';
 import { createPost } from './posts';
-import { FullComment } from '../../services/comments.service';
+import { CommentResponse, CommentsResponse, FullComment } from '../../services/comments.service';
 import { NewCommentData } from '../../schemas/comments';
 
 export function createComment(overrides?: Partial<Comment>): Comment {
@@ -60,4 +60,32 @@ export function createNewCommentData(overrides?: Partial<NewCommentData>): NewCo
     draft: false,
     ...overrides,
   };
+}
+
+export function createCommentResponse(overrides?: Partial<CommentResponse>): CommentResponse {
+  return {
+    id: faker.datatype.uuid(),
+    authorId: faker.datatype.uuid(),
+    authorName: faker.name.firstName(),
+    body: faker.lorem.words(6),
+    createdAt: new Date(),
+    draft: false,
+    lastModifiedAt: new Date(),
+    negativeVotes: 0,
+    positiveVotes: 0,
+    postId: faker.datatype.uuid(),
+    postTitle: faker.lorem.words(10),
+    score: 0,
+    totalVotes: 0,
+    ...overrides,
+  };
+}
+
+export function createCommentsResponse(qty: number = 5): CommentsResponse {
+  const comments: CommentResponse[] = [];
+  for (let i = 0; i < qty; i += 1) {
+    comments.push(createCommentResponse());
+  }
+
+  return { comments, cursor: comments[comments.length - 1].createdAt };
 }

@@ -11,7 +11,7 @@ export async function getAllComments(req: Request, res: Response) {
 export async function newComment(req: Request, res: Response) {
   const userId = requireSubject(req.subject);
   const response = await commentsService.newComment(req.body, userId);
-  res.status(200).json(response);
+  res.status(201).json(response);
 }
 
 export async function getComment(req: Request, res: Response) {
