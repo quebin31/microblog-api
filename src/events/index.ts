@@ -3,6 +3,6 @@ import { handleUserEmailVerificationEvent, UserEmailVerificationEvent } from './
 
 export const eventEmitter = new EventEmitter();
 
-export function startCollectingEvents() {
+export function registerEventHandlers() {
   eventEmitter.on(UserEmailVerificationEvent, handleUserEmailVerificationEvent);
 }

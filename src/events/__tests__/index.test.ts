@@ -1,9 +1,9 @@
-import { eventEmitter, startCollectingEvents } from '../index';
+import { eventEmitter, registerEventHandlers } from '../index';
 import { handleUserEmailVerificationEvent, UserEmailVerificationEvent } from '../verification';
 
 describe('Event emitter listeners', () => {
   test('contains email verification handler', () => {
-    startCollectingEvents();
+    registerEventHandlers();
     const listeners = eventEmitter.listeners(UserEmailVerificationEvent);
 
     expect(listeners).toHaveLength(1);
