@@ -1,9 +1,8 @@
 import { verificationService } from '../verification.service';
+import { emailService } from '../email.service';
 import { randomUUID } from 'crypto';
 import { BadRequestError, NotFoundError, TooManyRequestsError } from '../../errors';
 import { createUser } from '../../test/factories/accounts';
-import { sendGridMailMock } from '../../test/mocks/sendgrid';
-import { MailDataRequired } from '@sendgrid/mail';
 import { nolookalikes } from 'nanoid-dictionary';
 import { VerificationData } from '../../schemas/accounts';
 import { accountsRepository } from '../../repositories/accounts.repository';
@@ -12,13 +11,16 @@ import { captor, DeepMockProxy, MockProxy, mockReset } from 'jest-mock-extended'
 
 jest.mock('../../repositories/accounts.repository');
 jest.mock('../../repositories/verification.repository');
+jest.mock('../email.service');
 
 const accountsRepositoryMock = accountsRepository as MockProxy<typeof accountsRepository>;
 const verificationRepositoryMock = verificationRepository as DeepMockProxy<typeof verificationRepository>;
+const emailServiceMock = emailService as MockProxy<typeof emailService>;
 
 beforeEach(() => {
   mockReset(accountsRepositoryMock);
   mockReset(verificationRepositoryMock);
+  mockReset(emailServiceMock);
 });
 
 describe('Check if user is verified', () => {
@@ -105,20 +107,9 @@ describe('Send email verification', function() {
       expect(verificationRepositoryMock.code.set).toHaveBeenCalledWith(user.id, verificationCodeCaptor);
       const regex = new RegExp(`^[${nolookalikes}]{6}$`);
       const verificationCode = verificationCodeCaptor.value;
-      expect(regex.test(verificationCodeCaptor.value)).toBeTruthy();
+      expect(regex.test(verificationCodeCaptor.value)).toEqual(true);
 
-      expect(sendGridMailMock.send).toHaveBeenCalledTimes(1);
-      const emailDataCaptor = captor<MailDataRequired>();
-      expect(sendGridMailMock.send).toHaveBeenCalledWith(emailDataCaptor);
-      expect(emailDataCaptor.value).toMatchObject({
-        from: 'kevindelcastillo@ravn.co',
-        to: user.email,
-        subject: 'Confirm your Microblog account',
-      });
-
-      const emailData = emailDataCaptor.value;
-      expect(emailData.text).toEqual(`Confirmation code: ${verificationCode}`);
-      expect(emailData.html).toEqual(`Confirmation code: <strong>${verificationCode}</strong>`);
+      expect(emailServiceMock.sendVerificationCode).toHaveBeenCalledWith(user.email, verificationCode);
     });
 });
 

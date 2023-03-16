@@ -1,23 +1,11 @@
-import sendGridMail from '@sendgrid/mail';
-import config from '../config';
 import { customAlphabet } from 'nanoid/async';
 import { nolookalikes } from 'nanoid-dictionary';
 import { BadRequestError, NotFoundError, TooManyRequestsError } from '../errors';
 import { VerificationData } from '../schemas/accounts';
 import { verificationRepository } from '../repositories/verification.repository';
 import { accountsRepository } from '../repositories/accounts.repository';
+import { emailService } from './email.service';
 
-sendGridMail.setApiKey(config.emailApiKey);
-
-async function sendEmailWithCode(email: string, verificationCode: string) {
-  return sendGridMail.send({
-    to: email,
-    from: 'kevindelcastillo@ravn.co',
-    subject: 'Confirm your Microblog account',
-    text: `Confirmation code: ${verificationCode}`,
-    html: `Confirmation code: <strong>${verificationCode}</strong>`,
-  });
-}
 
 const codeGenerator = customAlphabet(nolookalikes, 6);
 
@@ -66,7 +54,7 @@ export const verificationService = {
     const verificationCode = await codeGenerator();
     await verificationRepository.requestedAt.set(id, Date.now());
     await verificationRepository.code.set(id, verificationCode);
-    await sendEmailWithCode(email, verificationCode);
+    await emailService.sendVerificationCode(email, verificationCode);
   },
 
   async verifyEmail(id: string, data: VerificationData) {
