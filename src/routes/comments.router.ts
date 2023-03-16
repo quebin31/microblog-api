@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { optional } from '../middlewares/util';
-import { authMiddleware } from '../middlewares/auth';
+import { authMiddleware, verifiedMiddleware } from '../middlewares/auth';
 import { validateBody, validateQuery } from '../middlewares/schemas';
 import { getAllSchema, newCommentSchema, patchCommentSchema } from '../schemas/comments';
 import asyncHandler from 'express-async-handler';
@@ -12,19 +12,21 @@ const router = Router();
 const getAllMiddlewares = [optional(authMiddleware), validateQuery(getAllSchema)];
 router.get('/', ...getAllMiddlewares, asyncHandler(controller.getAllComments));
 
-const newCommentMiddlewares = [authMiddleware, validateBody(newCommentSchema)];
+const newCommentMiddlewares = [authMiddleware, verifiedMiddleware, validateBody(newCommentSchema)];
 router.post('/', ...newCommentMiddlewares, asyncHandler(controller.newComment));
 
 router.get('/:id', optional(authMiddleware), asyncHandler(controller.getComment));
 
-const patchCommentMiddlewares = [authMiddleware, validateBody(patchCommentSchema)];
+const patchCommentMiddlewares = [authMiddleware, verifiedMiddleware, validateBody(patchCommentSchema)];
 router.patch('/:id', ...patchCommentMiddlewares, asyncHandler(controller.patchComment));
 
-router.delete('/:id', authMiddleware, asyncHandler(controller.deleteComment));
+const deleteCommentMiddlewares = [authMiddleware, verifiedMiddleware];
+router.delete('/:id', ...deleteCommentMiddlewares, asyncHandler(controller.deleteComment));
 
-const putVoteMiddlewares = [authMiddleware, validateBody(putVoteSchema)];
+const putVoteMiddlewares = [authMiddleware, verifiedMiddleware, validateBody(putVoteSchema)];
 router.put('/:id/votes', ...putVoteMiddlewares, asyncHandler(controller.putVote));
 
-router.delete('/:id/votes', authMiddleware, asyncHandler(controller.deleteVote));
+const deleteVoteMiddlewares = [authMiddleware, verifiedMiddleware];
+router.delete('/:id/votes', ...deleteVoteMiddlewares, asyncHandler(controller.deleteVote));
 
 export default router;
