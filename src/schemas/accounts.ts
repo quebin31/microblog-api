@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { Role } from '@prisma/client';
+import { atLeastOneDefined } from '../utils/types';
 
 const name = z.string().min(2).max(64);
 
@@ -25,15 +26,18 @@ export const verificationSchema = z.object({
 export const patchAccountSchema = z.union([
   z
     .object({
-      role: z.enum([Role.user, Role.moderator]),
-    }),
-  z
-    .object({
       name,
       publicEmail: z.boolean(),
       publicName: z.boolean(),
     })
-    .partial(),
+    .partial()
+    .refine(atLeastOneDefined, {
+      message: `At least one of 'user', 'publicEmail' or 'publicName' must be defined`,
+    }),
+  z
+    .object({
+      role: z.enum([Role.user, Role.moderator]),
+    }),
 ]);
 
 export type SignUpData = z.infer<typeof signUpSchema>;

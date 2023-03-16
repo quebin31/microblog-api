@@ -44,3 +44,7 @@ export function requireDefined<T>(value?: T, message?: () => string): T {
     throw new Error(errMsg);
   }
 }
+
+export function atLeastOneDefined(obj: Record<string | number | symbol, unknown>) {
+  return Object.values(obj).some(v => v !== undefined);
+}
