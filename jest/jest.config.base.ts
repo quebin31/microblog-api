@@ -6,7 +6,8 @@ export default <JestConfigWithTsJest>{
   roots: ['<rootDir>/src'],
   collectCoverageFrom: ['<rootDir>/src/**/*.ts'],
   coveragePathIgnorePatterns: [
-    '<rootDir>/index.ts',
+    'src/logger.ts',
+    'src/index.ts',
     '.*\.d\.ts',
     'test',
     'integration',
