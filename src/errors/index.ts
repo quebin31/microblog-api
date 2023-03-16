@@ -1,4 +1,5 @@
 import { isNativeError } from 'util/types';
+import { ZodIssue } from 'zod';
 
 export type ErrorCode = 'internal_server_error'
   | 'unauthorized'
@@ -29,6 +30,17 @@ export class UnauthorizedError extends RejectError {
   get rejection(): Rejection {
     return { status: 401, code: 'unauthorized', message: this.message };
   }
+}
+
+export class InvalidInputError extends RejectError {
+  constructor(private issues: ZodIssue[]) {
+    super();
+  }
+
+  get rejection(): Rejection {
+    return { status: 400, code: 'bad_request', message: 'Invalid input', errors: this.issues };
+  }
+
 }
 
 export class BadRequestError extends RejectError {

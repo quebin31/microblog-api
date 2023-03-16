@@ -2,7 +2,7 @@ import { buildExpressParams, buildReq } from '../../test/express';
 import { z } from 'zod';
 import { validateBody, validateQuery } from '../schemas';
 import { captor } from 'jest-mock-extended';
-import { BadRequestError } from '../../errors';
+import { InvalidInputError } from '../../errors';
 
 describe('Validate request body', () => {
   test('calls next with error if schema parsing fails', () => {
@@ -17,7 +17,7 @@ describe('Validate request body', () => {
     const err = captor<any>();
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(err);
-    expect(err.value).toBeInstanceOf(BadRequestError);
+    expect(err.value).toBeInstanceOf(InvalidInputError);
 
     expect(req.body).toStrictEqual(originalBody);
   });
@@ -50,7 +50,7 @@ describe('Validate request query', () => {
     const err = captor<any>();
     expect(next).toHaveBeenCalledTimes(1);
     expect(next).toHaveBeenCalledWith(err);
-    expect(err.value).toBeInstanceOf(BadRequestError);
+    expect(err.value).toBeInstanceOf(InvalidInputError);
 
     expect(req.query).toStrictEqual(originalQuery);
   });
