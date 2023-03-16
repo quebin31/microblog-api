@@ -2,13 +2,14 @@ import { verificationRepository } from '../verification.repository';
 import { randomUUID } from 'crypto';
 import redisClient from '../../redis';
 import { faker } from '@faker-js/faker';
+import { clearRedis } from '../../test/redis';
 
 beforeAll(async () => {
   await redisClient.connect();
 });
 
 beforeEach(async () => {
-  await redisClient.flushDb();
+  await clearRedis();
 });
 
 afterAll(async () => {
