@@ -14,7 +14,7 @@ server.use(customMorganMiddleware);
 server.use(express.json());
 server.use(express.urlencoded({ extended: true }));
 server.use('/api/v1', router);
-server.use(errorHandler({ stack: config.nodeEnv !== 'production' }));
+server.use(errorHandler({ stack: config.nodeEnv === 'development' }));
 
 export async function startServer(port: number = parseInt(config.port)): Promise<Server> {
   logger.info('Connecting to Redis...');
