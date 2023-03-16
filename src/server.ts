@@ -33,9 +33,3 @@ export async function startServer(port: number = parseInt(config.port)): Promise
     });
   });
 }
-
-export async function closeServer(server: Server): Promise<void> {
-  return new Promise((resolve, reject) => {
-    server.close((err) => err !== undefined ? reject(err) : resolve());
-  })
-}
