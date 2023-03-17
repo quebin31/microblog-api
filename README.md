@@ -48,6 +48,7 @@ npm i && npm run build && npm run setup:production
 ```
 
 And to start it with Node:
+
 ```shell
 npm start # or node dist/src/index.js
 ```
@@ -69,3 +70,9 @@ structure is expected see the file [admins.example.json](admins.example.json).
 ```
 
 _Do not push your admins file to your git remote as it contains sensitive data about your admins._
+
+## OpenAPI
+
+All the API endpoints are documented using the OpenAPI specification, with only failure responses
+missing, to serve the documentation locally using Redocly run the `redoc:watch` npm script, and if
+the service is already running access it by hitting the path `/api/v1/openapi`.
