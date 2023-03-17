@@ -8,7 +8,7 @@ schemas.
 
 There are three different supported environments: `production`, `development` and `test`.
 Each environment uses a `.env` suffixed by the name of the environment, for
-example, `.env.environment`.
+example, `.env.production`.
 
 The configuration of the service is read through environment variables stored in these files,
 do not track this into your version control as all the data there is sensitive, take a look at the
@@ -36,8 +36,9 @@ and [docker-compose.test.yml](docker-compose.test.yml)._
 
 To set up the production environment run the `setup:production` npm script which takes care of
 applying migrations to the database and running seeds if necessary, in contrast to the dev and test
-environment this setup doesn't take care of create a database or Redis instance as it expects those
-services to be already running and be accessible through their respective URL environment variables.
+environment this setup doesn't take care of creating a database or Redis instance as it expects
+those services to be already running and be accessible through their respective URL environment
+variables.
 
 #### Deploying
 
@@ -55,9 +56,10 @@ npm start # or node dist/src/index.js
 
 ## Admins File
 
-In order to seed the database with an initial set of admins the provided Prisma seed script looks
-up for a file to be defined in the environment variable `ADMINS_FILE`, to see an example of what
-structure is expected see the file [admins.example.json](admins.example.json).
+In order to seed the database with an initial set of admins a Prisma seed script is provided, this
+scrip looks up for a file to be defined in the environment variable `ADMINS_FILE`, and if found it
+reads the information from there to create the initial set of admins, to see an example using the
+expected schema see the example file [admins.example.json](admins.example.json).
 
 ```json
 [
@@ -69,10 +71,11 @@ structure is expected see the file [admins.example.json](admins.example.json).
 ]
 ```
 
-_Do not push your admins file to your git remote as it contains sensitive data about your admins._
+_Do not push your admins JSON file to your git remote as it contains sensitive data._
 
 ## OpenAPI
 
 All the API endpoints are documented using the OpenAPI specification, with only failure responses
 missing, to serve the documentation locally using Redocly run the `redoc:watch` npm script, and if
-the service is already running access it by hitting the path `/api/v1/openapi`.
+the service is already running access it by hitting the path `/api/v1/openapi` (the documentation 
+is included as part of the build step, see the `build` npm script).
