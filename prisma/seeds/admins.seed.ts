@@ -1,5 +1,4 @@
 import { prisma } from '../../src/prisma';
-import { requireDefined } from '../../src/utils/types';
 import { Role } from '@prisma/client';
 import { SignUpData, signUpSchema } from '../../src/schemas/accounts';
 import { z } from 'zod';
@@ -9,9 +8,11 @@ import { readFile } from 'fs/promises';
 const adminsSchema = z.array(signUpSchema);
 
 export default async function() {
-  const adminsFile = requireDefined(process.env.ADMINS_FILE, () => {
-    return `Environment variable ADMINS_FILE is not set, can't seed database`;
-  });
+  const adminsFile = process.env.ADMINS_FILE;
+  if (adminsFile === undefined) {
+    console.log('Skipping seeding of admins as ADMINS_FILE is not defined');
+    return;
+  }
 
   console.log(`Seeding admins from file ${adminsFile}`);
 
